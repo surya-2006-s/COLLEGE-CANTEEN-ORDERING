@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - College Canteen</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 { color: #333; font-size: 28px; }
+        .header h1 span { color: #667eea; }
+        .header-actions { display: flex; gap: 15px; align-items: center; }
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .refresh-btn:hover { background: #5a67d8; }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .logout-btn:hover { background: #c82333; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .orders-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .orders-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .orders-section h2 span {
+            color: #667eea;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 14px;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        tr:hover { background: #f8f9fa; }
+
+        .status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-preparing { background: #cce5ff; color: #004085; }
+        .status-ready { background: #d4edda; color: #155724; }
+        .status-delivered { background: #d1ecf1; color: #0c5460; }
+
+        .status-select {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .status-select:focus { outline: none; border-color: #667eea; }
+
+        .no-orders {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-size: 18px;
+        }
+
+        .badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 <span>Canteen</span> Dashboard</h1>
+            <div class="header-actions">
+                <button class="refresh-btn" onclick="location.reload()">🔄 Refresh</button>
+                <a href="/admin/logout" class="logout-btn">🚪 Logout</a>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number"><%= totalOrders || 0 %></div>
+                <div class="stat-label">📦 Total Orders</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><%= pendingOrders || 0 %></div>
+                <div class="stat-label">⏳ Pending Orders</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">₹<%= todayRevenue || 0 %></div>
+                <div class="stat-label">💰 Today's Revenue</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><%= todayOrders || 0 %></div>
+                <div class="stat-label">📅 Today's Orders</div>
+            </div>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="orders-section">
+            <h2>📋 All Orders <span class="badge"><%= totalOrders || 0 %></span></h2>
+            
+            <% if (orders && orders.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#Order</th>
+                        <th>Classroom</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orders.forEach(order => { %>
+                    <tr>
+                        <td><strong>#<%= order._id.toString().slice(-6) %></strong></td>
+                        <td>🏫 <%= order.classroom %></td>
+                        <td>
+                            <% order.items.forEach((item, index) => { %>
+                                <%= item.name %> x<%= item.quantity %><% if (index < order.items.length - 1) { %>, <% } %>
+                            <% }) %>
+                        </td>
+                        <td><strong>₹<%= order.total %></strong></td>
+                        <td>
+                            <span class="status status-<%= order.status %>">
+                                <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                            </span>
+                        </td>
+                        <td><%= new Date(order.createdAt).toLocaleTimeString() %></td>
+                        <td>
+                            <form action="/admin/update-order" method="POST" style="display: inline;">
+                                <input type="hidden" name="orderId" value="<%= order._id %>">
+                                <select name="status" class="status-select" onchange="this.form.submit()">
+                                    <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                    <option value="preparing" <%= order.status === 'preparing' ? 'selected' : '' %>>Preparing</option>
+                                    <option value="ready" <%= order.status === 'ready' ? 'selected' : '' %>>Ready</option>
+                                    <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+            <% } else { %>
+                <div class="no-orders">
+                    🍽️ No orders yet. Waiting for hungry students!
+                </div>
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart - College Canteen</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="/">← Continue Shopping</a>
+        </nav>
+        
+        <h1>Your Cart</h1>
+        
+        <% if (error === 'minOrder') { %>
+        <div style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #ffc107;">
+            <strong>⚠️ Minimum order of ₹100 required</strong> to proceed to checkout.
+            Please add more items to your cart.
+        </div>
+        <% } %>
+        
+        <% if (!cart || cart.length === 0) { %>
+            <p style="text-align: center; font-size: 18px; margin: 40px 0;">Your cart is empty</p>
+            <div style="text-align: center;">
+                <a href="/" class="button">Start Shopping</a>
+            </div>
+        <% } else { %>
+            
+            <% 
+            let total = 0; 
+            cart.forEach(item => { 
+                total += item.price * item.quantity; 
+            }); 
+            %>
+            
+            <div class="cart-items">
+                <% cart.forEach(item => { %>
+                <div class="cart-item">
+                    <div class="item-info">
+                        <h3><%= item.name %></h3>
+                        <p style="font-size: 18px;">₹<%= item.price %> x <%= item.quantity %> = <strong>₹<%= item.price * item.quantity %></strong></p>
+                    </div>
+                    <div class="item-actions">
+                        <form action="/update-cart" method="POST" style="display: inline;">
+                            <input type="hidden" name="itemId" value="<%= item.id %>">
+                            <input type="hidden" name="action" value="decrease">
+                            <button type="submit">−</button>
+                        </form>
+                        <span style="font-size: 18px; font-weight: bold;"><%= item.quantity %></span>
+                        <form action="/update-cart" method="POST" style="display: inline;">
+                            <input type="hidden" name="itemId" value="<%= item.id %>">
+                            <input type="hidden" name="action" value="increase">
+                            <button type="submit">+</button>
+                        </form>
+                        <form action="/update-cart" method="POST" style="display: inline;">
+                            <input type="hidden" name="itemId" value="<%= item.id %>">
+                            <input type="hidden" name="action" value="remove">
+                            <button type="submit" class="remove">Remove</button>
+                        </form>
+                    </div>
+                </div>
+                <% }) %>
+            </div>
+            
+            <div class="cart-total">
+                <h3>Total: ₹<%= total %></h3>
+                <a href="/classroom" class="button proceed">Proceed to Checkout</a>
+            </div>
+            
+        <% } %>
+    </div>
+</body>
+</html>

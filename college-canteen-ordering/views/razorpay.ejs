@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+        }
+        .amount {
+            font-size: 48px;
+            color: #667eea;
+            margin: 20px 0;
+        }
+        .razorpay-btn {
+            background: #667eea;
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pay with Razorpay</h1>
+        <div class="amount">₹<%= total %></div>
+        <button class="razorpay-btn" id="pay-btn">Pay Now</button>
+    </div>
+
+    <script>
+        document.getElementById('pay-btn').onclick = function() {
+            fetch('/create-order', { method: 'POST' })
+                .then(res => res.json())
+                .then(order => {
+                    const options = {
+                        key: 'YOUR_KEY_ID',
+                        amount: order.amount,
+                        currency: 'INR',
+                        name: 'College Canteen',
+                        description: 'Food Order',
+                        order_id: order.id,
+                        handler: function(response) {
+                            fetch('/verify-payment', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(response)
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    alert('Payment successful! Order placed.');
+                                    window.location.href = '/';
+                                }
+                            });
+                        }
+                    };
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                });
+        };
+    </script>
+</body>
+</html>
+

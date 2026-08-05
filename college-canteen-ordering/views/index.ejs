@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Canteen Ordering</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .university-logo {
+            text-align: center;
+            margin: 10px 0 30px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .university-logo img {
+            max-width: 100%;
+            height: auto;
+            max-height: 120px;
+            object-fit: contain;
+        }
+        .welcome-text {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .sub-text {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- University Logo -->
+        <div class="university-logo">
+            <img src="/images/klh-logo.png" alt="KLH Deemed to be University">
+        </div>
+
+        <h1 class="welcome-text">Welcome to College Canteen</h1>
+        <p class="sub-text">Order your favorite food from anywhere in the college!</p>
+        
+        <div class="categories">
+            <a href="/menu/cool-drinks" class="category-card">
+                🥤 Cool Drinks
+            </a>
+            <a href="/menu/packet-snacks" class="category-card">
+                🍟 Packet Snacks
+            </a>
+            <a href="/menu/snacks" class="category-card">
+                🍕 Snacks
+            </a>
+            <a href="/menu/fruit-juices" class="category-card">
+                🧃 Fruit Juices
+            </a>
+            <a href="/menu/icecreams" class="category-card">
+                🍦 Icecreams
+            </a>
+        </div>
+        
+        <% if (cart && cart.length > 0) { %>
+        <div class="order-tab">
+            <a href="/cart">🛒 View Order (₹<%= cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) %>)</a>
+        </div>
+        <% } %>
+    </div>
+</body>
+</html>

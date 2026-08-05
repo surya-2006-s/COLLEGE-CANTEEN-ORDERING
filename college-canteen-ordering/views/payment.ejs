@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPI ID Payment - College Canteen</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .upi-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(255,107,107,0.3);
+        }
+        .upi-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upi-header h2 {
+            color: #ff6b6b;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .upi-input-group {
+            margin-bottom: 20px;
+        }
+        .upi-input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+        }
+        .upi-input-group input {
+            width: 100%;
+            padding: 18px;
+            border: 3px solid #ff6b6b;
+            border-radius: 15px;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+        .upi-input-group input:focus {
+            outline: none;
+            box-shadow: 0 0 0 5px rgba(255,107,107,0.2);
+        }
+        .pay-button {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            color: white;
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px 0;
+            box-shadow: 0 10px 20px rgba(255,107,107,0.3);
+            transition: all 0.3s;
+        }
+        .pay-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(255,107,107,0.4);
+        }
+        .quick-examples {
+            margin-top: 30px;
+        }
+        .quick-examples h4 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .example-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .example-chip {
+            background: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #ddd;
+        }
+        .example-chip:hover {
+            background: #ff6b6b;
+            color: white;
+            border-color: #ff6b6b;
+        }
+        .merchant-chip {
+            background: #ff6b6b;
+            color: white;
+            font-weight: bold;
+        }
+        .amount-display {
+            text-align: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin: 20px 0;
+        }
+        .timer-box {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .note {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        /* QR Scanner Option Section - NEW */
+        .qr-option-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 3px dashed #ff6b6b;
+            text-align: center;
+        }
+        .qr-option-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .qr-option-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .qr-option-card:hover {
+            transform: translateY(-5px);
+            border-color: #ff6b6b;
+            box-shadow: 0 10px 30px rgba(255,107,107,0.2);
+        }
+        .qr-icon {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+        .qr-text {
+            font-size: 22px;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-bottom: 5px;
+        }
+        .qr-subtext {
+            color: #666;
+            font-size: 14px;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="upi-container">
+            <div class="upi-header">
+                <h2>📱 Pay with UPI ID</h2>
+                <p style="color: #666;">Enter your UPI ID to pay ₹<%= total %> directly</p>
+            </div>
+
+            <!-- Amount Display -->
+            <div class="amount-display">
+                ₹<%= total %>
+            </div>
+
+            <!-- Timer Display -->
+            <div class="timer-box" id="timerBox">
+                <div id="timerMessage">⏱️ Click "Pay Now" to start 30-second timer</div>
+                <div id="timerDisplay" style="font-size: 32px; font-weight: bold; margin-top: 10px; color: #ff6b6b;"></div>
+            </div>
+
+            <!-- UPI ID Input -->
+            <div class="upi-input-group">
+                <label>Enter Your UPI ID:</label>
+                <input type="text" id="customerUpiId" placeholder="e.g., 8897273395@paytm or name@okhdfcbank" value="8897273395@paytm">
+                <p style="font-size: 13px; color: #666; margin-top: 8px;">Enter any UPI ID (Google Pay, PhonePe, Paytm, etc.)</p>
+            </div>
+
+            <!-- Pay Button -->
+            <button class="pay-button" onclick="payWithUPI()">
+                💸 Pay ₹<%= total %> Now
+            </button>
+
+            <!-- Quick Fill Examples -->
+            <div class="quick-examples">
+                <h4>📋 Quick Fill Examples:</h4>
+                <div class="example-chips">
+                    <span class="example-chip merchant-chip" onclick="setUPI('<%= upiId %>')">📋 Merchant UPI</span>
+                    <span class="example-chip" onclick="setUPI('8897273395@paytm')">8897273395@paytm</span>
+                    <span class="example-chip" onclick="setUPI('example@okhdfcbank')">example@okhdfcbank</span>
+                    <span class="example-chip" onclick="setUPI('9876543210@ybl')">9876543210@ybl</span>
+                </div>
+            </div>
+
+            <!-- Note -->
+            <div class="note">
+                <strong>📌 Note:</strong> After clicking "Pay Now", your UPI app will open with ₹<%= total %> pre-filled. Just enter your UPI PIN to complete payment.
+            </div>
+
+            <!-- ========== QR SCANNER OPTION SECTION - ADDED HERE ========== -->
+            <div class="qr-option-section">
+                <div class="qr-option-title">🔍 Prefer to scan instead?</div>
+                <div class="qr-option-card" onclick="window.location.href='/qr-payment'">
+                    <div class="qr-icon">📷</div>
+                    <div class="qr-text">Scan QR Code</div>
+                    <div class="qr-subtext">Click here to open QR scanner page</div>
+                    <div style="margin-top: 15px; font-size: 20px; font-weight: bold; color: #ff6b6b;">₹<%= total %></div>
+                </div>
+                <p style="font-size: 13px; color: #666; margin-top: 15px;">
+                    Scan QR code with any UPI app - amount ₹<%= total %> will auto-fill
+                </p>
+            </div>
+            <!-- ========== END QR SCANNER OPTION ========== -->
+
+            <!-- Back Link -->
+            <a href="/payment" class="back-link">← Back to Payment Options</a>
+        </div>
+    </div>
+
+    <script>
+        let timerInterval;
+        let paymentEnabled = false;
+
+        function payWithUPI() {
+            const customerUpi = document.getElementById('customerUpiId').value.trim();
+            
+            if (!customerUpi) {
+                alert('Please enter your UPI ID');
+                return;
+            }
+            
+            if (!customerUpi.includes('@')) {
+                alert('Please enter a valid UPI ID (e.g., name@bank or mobile@bank)');
+                return;
+            }
+            
+            // Create UPI deep link
+            const upiLink = `upi://pay?pa=${encodeURIComponent(customerUpi)}&pn=Customer&am=<%= total %>&cu=INR&mode=pay&tn=College%20Canteen%20Order`;
+            
+            // Try to open UPI app
+            window.location.href = upiLink;
+            
+            // Start timer
+            startPaymentTimer();
+            
+            // Show message
+            alert(`✅ UPI app opening with ₹<%= total %>. Complete payment and return here.`);
+        }
+
+        function startPaymentTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            let seconds = 30;
+            const timerDisplay = document.getElementById('timerDisplay');
+            const timerMessage = document.getElementById('timerMessage');
+            
+            timerMessage.innerHTML = '⏱️ Please complete payment in your UPI app...';
+            
+            timerInterval = setInterval(() => {
+                timerDisplay.innerHTML = `⏳ ${seconds}s`;
+                
+                if (seconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.innerHTML = '✅ Done!';
+                    timerMessage.innerHTML = '✅ Payment window ready - click "I\'ve Completed Payment" below';
+                    
+                    // Show completion button
+                    showCompletionButton();
+                }
+                seconds--;
+            }, 1000);
+        }
+
+        function showCompletionButton() {
+            const container = document.querySelector('.upi-container');
+            const existingBtn = document.getElementById('completePaymentBtn');
+            
+            if (!existingBtn) {
+                const btnHtml = `
+                    <form id="completePaymentForm" action="/process-payment" method="POST" style="margin-top: 20px;">
+                        <button type="submit" class="pay-button" style="background: #28a745;">
+                            ✅ I've Completed Payment
+                        </button>
+                    </form>
+                `;
+                container.insertAdjacentHTML('beforeend', btnHtml);
+            }
+        }
+
+        function setUPI(upiId) {
+            document.getElementById('customerUpiId').value = upiId;
+        }
+    </script>
+</body>
+</html>
+

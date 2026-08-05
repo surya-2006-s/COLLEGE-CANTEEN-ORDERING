@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload ID Card - College Canteen</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Your ID Card</h1>
+        
+        <div class="camera-section">
+            <video id="video" width="400" height="300" autoplay></video>
+            <canvas id="canvas" width="400" height="300" style="display: none;"></canvas>
+            
+            <div class="camera-controls">
+                <button id="capture" class="button">Take Photo</button>
+                <button id="uploadBtn" class="button" style="background: #28a745; margin-left: 10px;" onclick="document.getElementById('fileInput').click()">
+                    📁 Upload Photo
+                </button>
+            </div>
+            
+            <form id="uploadForm" action="/upload-id" method="POST" enctype="multipart/form-data">
+                <input type="file" id="fileInput" name="idPhoto" accept="image/*" style="display: none;">
+                <button type="submit" id="submitPhoto" class="button" style="display: none; margin-top: 20px;">Upload & Continue</button>
+            </form>
+            
+            <div id="preview" style="display: none; margin-top: 20px;">
+                <h3>Preview:</h3>
+                <img id="previewImage" width="400" height="300" style="border-radius: 10px; margin: 10px 0;">
+                <button onclick="document.getElementById('uploadForm').submit()" class="button">Confirm & Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const capture = document.getElementById('capture');
+        const preview = document.getElementById('preview');
+        const previewImage = document.getElementById('previewImage');
+        const uploadForm = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const submitPhoto = document.getElementById('submitPhoto');
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert('Camera access denied. Please upload a photo instead.');
+            }
+        }
+
+        startCamera();
+
+        capture.addEventListener('click', () => {
+            canvas.getContext('2d').drawImage(video, 0, 0, 400, 300);
+            const imageData = canvas.toDataURL('image/jpeg');
+            
+            canvas.toBlob((blob) => {
+                const file = new File([blob], 'id-photo.jpg', { type: 'image/jpeg' });
+                
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                
+                previewImage.src = imageData;
+                preview.style.display = 'block';
+                submitPhoto.style.display = 'block';
+                video.style.display = 'none';
+                capture.style.display = 'none';
+                document.getElementById('uploadBtn').style.display = 'none';
+            }, 'image/jpeg');
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImage.src = e.target.result;
+                    preview.style.display = 'block';
+                    submitPhoto.style.display = 'block';
+                    video.style.display = 'none';
+                    capture.style.display = 'none';
+                    document.getElementById('uploadBtn').style.display = 'none';
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+    </script>
+</body>
+</html>

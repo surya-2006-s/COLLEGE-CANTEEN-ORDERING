@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Payment - College Canteen</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+                        url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 90%;
+            margin: 20px auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .qr-header h2 {
+            color: #ff6b6b;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .amount-display {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .qr-code-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 20px;
+            margin: 20px 0;
+            border: 3px dashed #ff6b6b;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .qr-code-box:hover {
+            transform: scale(1.02);
+            border-color: #28a745;
+        }
+
+        .qr-code-box img {
+            width: 280px;
+            height: 280px;
+            border-radius: 10px;
+        }
+
+        /* ======== SUCCESS STATE (Hidden by default) ======== */
+        #successState {
+            display: none;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        #successState .success-icon {
+            font-size: 80px;
+            margin: 20px 0;
+            animation: bounceIn 0.8s ease;
+        }
+
+        #successState .success-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #28a745;
+            margin: 15px 0;
+        }
+
+        #successState .success-subtitle {
+            font-size: 18px;
+            color: #666;
+            margin: 10px 0 20px;
+            line-height: 1.6;
+        }
+
+        #successState .success-details {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        #successState .success-details p {
+            margin: 8px 0;
+            color: #2e7d32;
+        }
+
+        .done-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(40, 167, 69, 0.4);
+            transition: all 0.3s;
+        }
+
+        .done-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(40, 167, 69, 0.5);
+        }
+
+        /* ======== WAITING STATE ======== */
+        #waitingState {
+            display: block;
+        }
+
+        .timer-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .status-box {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .status-waiting {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 5px solid #ffc107;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 5px solid #28a745;
+        }
+
+        .upi-id-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            border: 2px dashed #ff6b6b;
+            word-break: break-all;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+
+        /* ======== ANIMATIONS ======== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            margin: 20px auto;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #ff6b6b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- ========================================= -->
+        <!-- WAITING STATE (Default)                    -->
+        <!-- ========================================= -->
+        <div id="waitingState">
+            <div class="qr-header">
+                <h2>📷 Scan to Pay</h2>
+                <p style="color: #666;">Scan with any UPI app</p>
+            </div>
+
+            <div class="amount-display">
+                ₹<%= total %>
+            </div>
+
+            <div class="qr-code-box" onclick="startPaymentCheck()">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=upi://pay?pa=<%= upiId %>&pn=College%20Canteen&am=<%= total %>&cu=INR&mode=pay" 
+                     alt="Scan to pay ₹<%= total %>">
+                <p style="margin-top: 10px; color: #ff6b6b; font-weight: bold;">
+                    👆 Click to start payment check
+                </p>
+            </div>
+
+            <div id="statusBox" class="status-box status-waiting">
+                ⏳ Click QR code above to start payment check
+            </div>
+
+            <div class="timer-box">
+                <div id="timerMessage">⏱️ Waiting for payment...</div>
+                <div id="timerDisplay" style="font-size: 32px; font-weight: bold; margin-top: 10px; color: #ff6b6b;"></div>
+            </div>
+
+            <div class="upi-details" style="background: #e9ecef; padding: 20px; border-radius: 15px; margin: 20px 0;">
+                <h3>UPI ID</h3>
+                <div class="upi-id-box">
+                    <%= upiId %>
+                </div>
+                <p style="margin-top: 10px;"><strong>Amount: ₹<%= total %></strong></p>
+                <button onclick="copyUPI()" style="background: #ff6b6b; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer;">
+                    📋 Copy
+                </button>
+            </div>
+
+            <!-- Simulate Payment (Testing only) -->
+            <form action="/simulate-payment" method="POST">
+                <button type="submit" class="done-btn" style="background: #6c757d; box-shadow: none; font-size: 16px;">
+                    🧪 Simulate Payment (Test)
+                </button>
+            </form>
+
+            <a href="/payment" class="back-link">← Back</a>
+        </div>
+
+        <!-- ========================================= -->
+        <!-- SUCCESS STATE (Shown after payment)       -->
+        <!-- ========================================= -->
+        <div id="successState">
+            <div class="success-icon">✅</div>
+            <div class="success-title">Payment Successful! 🎉</div>
+            <div class="success-subtitle">
+                Your order will be delivered to you soon! 🍽️
+            </div>
+
+            <div class="success-details">
+                <p><strong>📅 Order Time:</strong> <span id="orderTime"></span></p>
+                <p><strong>🏫 Classroom:</strong> <span id="orderClassroom"></span></p>
+                <p><strong>💰 Amount Paid:</strong> ₹<span id="orderAmount"></span></p>
+                <p style="margin-top: 15px; color: #28a745; font-weight: bold;">
+                    ✅ Payment Verified Successfully!
+                </p>
+            </div>
+
+            <form action="/process-payment" method="POST">
+                <button type="submit" class="done-btn">
+                    ✅ Done - Go to Home
+                </button>
+            </form>
+            <br>
+            <a href="/" style="color: #ff6b6b; text-decoration: none;">← Back to Home</a>
+        </div>
+
+    </div>
+
+    <script>
+        let checkInterval;
+        let isChecking = false;
+        const classroom = '<%= classroom || "Not specified" %>';
+        const total = '<%= total %>';
+        const upiId = '<%= upiId %>';
+
+        function startPaymentCheck() {
+            if (isChecking) return;
+            isChecking = true;
+
+            const statusBox = document.getElementById('statusBox');
+            const timerDisplay = document.getElementById('timerDisplay');
+            const timerMessage = document.getElementById('timerMessage');
+
+            statusBox.className = 'status-box status-waiting';
+            statusBox.innerHTML = '⏳ Waiting for payment... Please complete in your UPI app';
+            timerMessage.innerHTML = '⏱️ Checking for payment confirmation...';
+            timerDisplay.innerHTML = '🔄 Scanning for payment...';
+
+            let attempts = 0;
+            const maxAttempts = 30;
+
+            checkInterval = setInterval(() => {
+                attempts++;
+                const remaining = maxAttempts - attempts;
+                timerDisplay.innerHTML = `⏳ ${remaining}s remaining`;
+
+                checkPaymentStatus();
+
+                if (attempts >= maxAttempts) {
+                    clearInterval(checkInterval);
+                    isChecking = false;
+                    timerDisplay.innerHTML = '⏰ Time Out!';
+                    timerMessage.innerHTML = '⏰ Payment not detected. Please try again.';
+                    statusBox.className = 'status-box status-waiting';
+                    statusBox.innerHTML = '⏰ Payment not detected. Click QR to try again.';
+                    document.querySelector('.qr-code-box').style.borderColor = '#dc3545';
+                }
+            }, 2000);
+        }
+
+        function checkPaymentStatus() {
+            fetch('/check-payment-status')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.paymentVerified) {
+                        clearInterval(checkInterval);
+                        isChecking = false;
+                        showSuccessPage();
+                    }
+                })
+                .catch(error => {
+                    console.log('Error checking payment:', error);
+                });
+        }
+
+        function showSuccessPage() {
+            document.getElementById('waitingState').style.display = 'none';
+            document.getElementById('successState').style.display = 'block';
+            document.getElementById('orderTime').textContent = new Date().toLocaleString();
+            document.getElementById('orderClassroom').textContent = classroom;
+            document.getElementById('orderAmount').textContent = total;
+        }
+
+        function copyUPI() {
+            navigator.clipboard.writeText(upiId);
+            alert('UPI ID copied!');
+        }
+    </script>
+</body>
+</html>

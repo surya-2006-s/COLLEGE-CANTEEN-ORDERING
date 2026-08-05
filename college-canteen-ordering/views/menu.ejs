@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= category %> - College Canteen</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="/">← Back to Home</a>
+        </nav>
+        
+        <h1><%= category %></h1>
+        
+        <div class="menu-items">
+            <% items.forEach(item => { %>
+            <div class="item-card">
+                <h3><%= item.name %></h3>
+                <p class="price">₹<%= item.price %></p>
+                <form action="/add-to-cart" method="POST">
+                    <input type="hidden" name="itemId" value="<%= item.id %>">
+                    <input type="hidden" name="itemName" value="<%= item.name %>">
+                    <input type="hidden" name="price" value="<%= item.price %>">
+                    <input type="hidden" name="category" value="<%= item.category %>">
+                    <button type="submit">Add to Cart</button>
+                </form>
+            </div>
+            <% }) %>
+        </div>
+        
+        <% if (cart && cart.length > 0) { %>
+        <div class="order-tab">
+            <a href="/cart">🛒 View Cart (₹<%= cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) %>)</a>
+        </div>
+        <% } %>
+    </div>
+</body>
+</html>

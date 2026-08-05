@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Classroom - College Canteen</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Select Your Classroom</h1>
+        
+        <form action="/save-classroom" method="POST" class="room-selection">
+            <div class="floors">
+                <% const floors = ['-1', '0', '1', '2', '3', '4']; %>
+                <% floors.forEach(floor => { %>
+                <div class="floor-section">
+                    <h3>Floor <%= floor === '-1' ? 'Basement' : floor %></h3>
+                    <div class="room-grid">
+                        <% for(let i = 1; i <= 7; i++) { %>
+                        <% const roomNum = `${floor === '-1' ? 'B' : floor}${i.toString().padStart(2, '0')}` %>
+                        <label class="room-option">
+                            <input type="radio" name="classroom" value="<%= roomNum %>" required>
+                            <span><%= roomNum %></span>
+                        </label>
+                        <% } %>
+                    </div>
+                </div>
+                <% }) %>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button type="submit" class="button">Next: Upload ID Card</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
