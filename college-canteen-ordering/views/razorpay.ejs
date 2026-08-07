@@ -39,17 +39,29 @@
 <body>
     <div class="container">
         <h1>Pay with Razorpay</h1>
-        <div class="amount">₹<%= total %></div>
-        <button class="razorpay-btn" id="pay-btn">Pay Now</button>
-    </div>
-
+            <% if (!razorpayConfigured) { %>
+                <div style="color: #a94442; background: #f2dede; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    Razorpay is not configured yet. Set <strong>RAZORPAY_KEY_ID</strong> and <strong>RAZORPAY_KEY_SECRET</strong> in your environment to enable payment.
+                </div>
+            <% } %>
+            <div class="amount">₹<%= total %></div>
+            <button class="razorpay-btn" id="pay-btn" <%= !razorpayConfigured ? 'disabled' : '' %>>Pay Now</button>
+            <div style="margin-top: 12px; text-align:center;"><a href="/payment" style="color:#667eea; text-decoration:none;">← Back to Payment Options</a></div>
     <script>
         document.getElementById('pay-btn').onclick = function() {
+            if (!<%= razorpayConfigured ? 'true' : 'false' %>) {
+                alert('Razorpay keys are not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.');
+                return;
+            }
             fetch('/create-order', { method: 'POST' })
                 .then(res => res.json())
                 .then(order => {
+                    if (order.error) {
+                        alert('Unable to create Razorpay order: ' + order.error);
+                        return;
+                    }
                     const options = {
-                        key: 'YOUR_KEY_ID',
+                        key: '<%= razorpayKeyId %>',
                         amount: order.amount,
                         currency: 'INR',
                         name: 'College Canteen',
@@ -64,14 +76,28 @@
                             .then(res => res.json())
                             .then(data => {
                                 if (data.success) {
+                                    return fetch('/process-payment', { method: 'POST' });
+                                }
+                                throw new Error(data.error || 'Verification failed');
+                            })
+                            .then(res => {
+                                if (res.ok) {
                                     alert('Payment successful! Order placed.');
                                     window.location.href = '/';
+                                } else {
+                                    return res.text().then(text => { throw new Error(text); });
                                 }
+                            })
+                            .catch(error => {
+                                alert('Payment failed: ' + error.message);
                             });
                         }
                     };
                     const rzp = new Razorpay(options);
                     rzp.open();
+                })
+                .catch(err => {
+                    alert('Unable to start payment: ' + err.message);
                 });
         };
     </script>

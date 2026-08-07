@@ -227,6 +227,16 @@
             </div>
             <!-- ========== END QR SCANNER OPTION ========== -->
 
+            <div class="qr-option-section">
+                <div class="qr-option-title">💳 Prefer Razorpay?</div>
+                <div class="qr-option-card" onclick="window.location.href='/razorpay'">
+                    <div class="qr-icon">💰</div>
+                    <div class="qr-text">Pay with Razorpay</div>
+                    <div class="qr-subtext">Secure online payment using Razorpay</div>
+                    <div style="margin-top: 15px; font-size: 20px; font-weight: bold; color: #ff6b6b;">₹<%= total %></div>
+                </div>
+            </div>
+
             <!-- Back Link -->
             <a href="/payment" class="back-link">← Back to Payment Options</a>
         </div>
@@ -310,4 +320,3 @@
     </script>
 </body>
 </html>
-

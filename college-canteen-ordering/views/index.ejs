@@ -33,6 +33,111 @@
             margin-bottom: 30px;
             font-size: 18px;
         }
+        .user-greeting {
+            text-align: right;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .user-greeting span {
+            font-weight: bold;
+            color: #333;
+        }
+        .user-greeting a {
+            color: #ff6b6b;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+        .user-greeting a:hover {
+            text-decoration: underline;
+        }
+        .login-prompt {
+            text-align: center;
+            background: #fff3cd;
+            padding: 40px;
+            border-radius: 15px;
+            margin: 40px 0;
+            border: 2px dashed #ffc107;
+        }
+        .login-prompt p {
+            font-size: 20px;
+            color: #856404;
+            margin-bottom: 20px;
+        }
+        .auth-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .auth-buttons .button {
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .button-primary {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            color: white;
+        }
+        .button-secondary {
+            background: white;
+            color: #ff6b6b;
+            border: 2px solid #ff6b6b;
+        }
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255,107,107,0.4);
+        }
+        .button-secondary:hover {
+            background: #ff6b6b;
+            color: white;
+        }
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 18px;
+        }
+        .order-tab {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            padding: 15px 25px;
+            border-radius: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        .order-tab a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .category-card {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-decoration: none;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .category-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 30px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body>
@@ -42,31 +147,57 @@
             <img src="/images/klh-logo.png" alt="KLH Deemed to be University">
         </div>
 
+        <!-- User Greeting -->
+        <div class="user-greeting">
+            <% if (user) { %>
+                <span>👋 Welcome, <strong><%= user.full_name || user.email %></strong></span>
+                <a href="/logout">Logout</a>
+                <a href="/cart" style="color: #28a745;">🛒 Cart (<%= cart ? cart.length : 0 %>)</a>
+            <% } else { %>
+                <span>👤 Guest</span>
+                <a href="/login">Login</a>
+                <a href="/signup">Sign Up</a>
+            <% } %>
+        </div>
+
         <h1 class="welcome-text">Welcome to College Canteen</h1>
         <p class="sub-text">Order your favorite food from anywhere in the college!</p>
-        
-        <div class="categories">
-            <a href="/menu/cool-drinks" class="category-card">
-                🥤 Cool Drinks
-            </a>
-            <a href="/menu/packet-snacks" class="category-card">
-                🍟 Packet Snacks
-            </a>
-            <a href="/menu/snacks" class="category-card">
-                🍕 Snacks
-            </a>
-            <a href="/menu/fruit-juices" class="category-card">
-                🧃 Fruit Juices
-            </a>
-            <a href="/menu/icecreams" class="category-card">
-                🍦 Icecreams
-            </a>
-        </div>
-        
+
+        <!-- Check if user is logged in -->
+        <% if (user) { %>
+            <!-- User is logged in - Show Menu -->
+            <% if (categories && categories.length > 0) { %>
+                <div class="categories">
+                    <% categories.forEach(category => { %>
+                        <a href="/menu/<%= category.slug || category %>" class="category-card">
+                            <%= category.name || category %>
+                        </a>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="empty-message">
+                    <p>No menu categories available right now. Please add items to PocketBase.</p>
+                    <p style="font-size: 14px; color: #999; margin-top: 10px;">
+                        Go to <strong>http://127.0.0.1:8090/_/</strong> and add menu items.
+                    </p>
+                </div>
+            <% } %>
+        <% } else { %>
+            <!-- User is NOT logged in - Show Login Prompt -->
+            <div class="login-prompt">
+                <p>🔒 Please login or sign up to view the full menu and add items to your cart.</p>
+                <div class="auth-buttons">
+                    <a href="/login" class="button button-primary">🔐 Login</a>
+                    <a href="/signup" class="button button-secondary">📝 Sign Up</a>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- Order Tab (Cart) - Always visible if items in cart -->
         <% if (cart && cart.length > 0) { %>
-        <div class="order-tab">
-            <a href="/cart">🛒 View Order (₹<%= cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) %>)</a>
-        </div>
+            <div class="order-tab">
+                <a href="/cart">🛒 View Order (₹<%= cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) %>)</a>
+            </div>
         <% } %>
     </div>
 </body>

@@ -8,8 +8,15 @@
 </head>
 <body>
     <div class="container">
-        <nav>
+        <nav class="menu-nav">
             <a href="/">← Back to Home</a>
+            <% if (user) { %>
+                <a href="/logout" class="button button-secondary small-button">Logout</a>
+            <% } else { %>
+                <a href="/login" class="button button-primary small-button">Login</a>
+                <a href="/signup" class="button button-secondary small-button">Sign Up</a>
+            <% } %>
+            <a href="/cart" class="button button-primary small-button">Cart (<%= cart ? cart.length : 0 %>)</a>
         </nav>
         
         <h1><%= category %></h1>

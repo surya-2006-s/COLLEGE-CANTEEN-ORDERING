@@ -3,151 +3,165 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
 const multer = require('multer');
-const nodemailer = require('nodemailer');
 const fs = require('fs');
+const nodemailer = require('nodemailer');
 
-// ==================== SUPABASE SETUP ====================
-const { createClient } = require('@supabase/supabase-js');
-
-const supabaseUrl = 'https://hsweqjifvqjvgaapvuvm.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhzd2VxanRmdnFqdmdhYXB2dXZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5MTkyNjEsImV4cCI6MjEwMTQ5NTI2MX0.2k_ACam0psekGnETmrgKTCCvG2lI0vwgzflYZZCtmWI';
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-console.log('✅ Supabase client initialized.');
-
-// ==================== EXPRESS SETUP ====================
 const app = express();
 const PORT = 3000;
 
+// ==================== MIDDLEWARE ====================
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
+
+// ==================== SESSION MIDDLEWARE ====================
 app.use(session({
     secret: 'canteen-secret-key',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 24 * 60 * 60 * 1000
+    }
 }));
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// ==================== ADMIN CREDENTIALS ====================
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'canteen123';
 
-// ==================== MULTER SETUP (For ID Uploads) ====================
+// ==================== MULTER SETUP ====================
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/uploads/')
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname)
-    }
+    destination: function (req, file, cb) { cb(null, 'public/uploads/') },
+    filename: function (req, file, cb) { cb(null, Date.now() + '-' + file.originalname) }
 });
 const upload = multer({ storage: storage });
 
-// ==================== USER ROUTES ====================
+// ==================== POCKETBASE SETUP ====================
+const PB_URL = 'http://127.0.0.1:8090';
 
-// Home page - Get categories from Supabase
-app.get('/', async (req, res) => {
-    req.session.cart = req.session.cart || [];
-    
-    const { data: menuItems, error } = await supabase
-        .from('menu')
-        .select('category');
+// ==================== EMAIL SETUP ====================
+// UPDATE THIS WITH YOUR NEW APP PASSWORD
+const EMAIL_PASSWORD = 'klbi vkdj huty fuwn'; // <-- CHANGE THIS!
 
-    if (error) {
-        console.log("Error fetching categories:", error.message);
-        return res.render('index', { categories: [], cart: req.session.cart });
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'suryasreemanth01@gmail.com',
+        pass: EMAIL_PASSWORD
     }
-
-    const categories = [...new Set(menuItems.map(item => item.category))];
-    res.render('index', { categories: categories, cart: req.session.cart });
 });
 
-// Menu page - Get items by category from Supabase
-app.get('/menu/:category', async (req, res) => {
-    const category = req.params.category;
-    
-    const { data: items, error } = await supabase
-        .from('menu')
-        .select('*')
-        .eq('category', category);
-
+// Test email connection
+transporter.verify((error, success) => {
     if (error) {
-        console.log("Error fetching menu items:", error.message);
-        return res.render('menu', { category: category.replace('-', ' ').toUpperCase(), items: [], cart: req.session.cart || [] });
+        console.log('❌ Email Error:', error);
+    } else {
+        console.log('✅ Email ready!');
+    }
+});
+
+// ==================== ROUTES ====================
+
+// 1. HOME PAGE
+app.get('/', async (req, res) => {
+    req.session.cart = req.session.cart || [];
+    let categories = [];
+
+    try {
+        const response = await fetch(`${PB_URL}/api/collections/menu/records`);
+        if (response.ok) {
+            const data = await response.json();
+            const uniqueCategories = [...new Set(data.items.map(item => item.category))];
+            categories = uniqueCategories.map(cat => ({
+                name: cat,
+                slug: cat
+            }));
+        }
+    } catch (error) {
+        console.log("⚠️ Menu fetch failed.");
     }
 
-    res.render('menu', { 
-        category: category.replace('-', ' ').toUpperCase(),
+    res.render("index", {
+        categories: categories,
+        cart: req.session.cart,
+        user: req.session.user || null,
+        requireLogin: !req.session.user
+    });
+});
+
+// 2. MENU PAGE
+app.get('/menu/:category', async (req, res) => {
+    const category = req.params.category;
+    let items = [];
+
+    try {
+        const response = await fetch(
+            `${PB_URL}/api/collections/menu/records?filter=(category="${category}")`
+        );
+        if (response.ok) {
+            const data = await response.json();
+            items = data.items || [];
+        }
+    } catch (err) {
+        console.log("❌ Error fetching menu:", err);
+    }
+
+    res.render("menu", {
+        category: category,
         items: items,
+        user: req.session.user,
         cart: req.session.cart || []
     });
 });
 
-// Add to cart (This uses the session, doesn't need Supabase)
+// 3. ADD TO CART
 app.post('/add-to-cart', (req, res) => {
     const { itemId, itemName, price, category } = req.body;
     req.session.cart = req.session.cart || [];
     
-    const existingItem = req.session.cart.find(item => item.id === parseInt(itemId));
-    
+    const existingItem = req.session.cart.find(item => item.id === itemId);
     if (existingItem) {
         existingItem.quantity += 1;
     } else {
         req.session.cart.push({
-            id: parseInt(itemId),
+            id: itemId,
             name: itemName,
             price: parseInt(price),
             category: category,
             quantity: 1
         });
     }
-    
     res.redirect(`/menu/${category}`);
 });
 
-// Cart page
+// 4. CART PAGE
 app.get('/cart', (req, res) => {
     const error = req.query.error || null;
     res.render('cart', { cart: req.session.cart || [], error: error });
 });
 
-// Update cart
 app.post('/update-cart', (req, res) => {
     const { itemId, action } = req.body;
     const cart = req.session.cart || [];
-    const itemIndex = cart.findIndex(item => item.id === parseInt(itemId));
+    const itemIndex = cart.findIndex(item => item.id === itemId);
     
     if (itemIndex !== -1) {
-        if (action === 'increase') {
-            cart[itemIndex].quantity += 1;
-        } else if (action === 'decrease') {
+        if (action === 'increase') cart[itemIndex].quantity += 1;
+        else if (action === 'decrease') {
             cart[itemIndex].quantity -= 1;
-            if (cart[itemIndex].quantity === 0) {
-                cart.splice(itemIndex, 1);
-            }
-        } else if (action === 'remove') {
-            cart.splice(itemIndex, 1);
-        }
+            if (cart[itemIndex].quantity === 0) cart.splice(itemIndex, 1);
+        } else if (action === 'remove') cart.splice(itemIndex, 1);
     }
-    
     req.session.cart = cart;
     res.redirect('/cart');
 });
 
-// Classroom selection
+// 5. CLASSROOM
 app.get('/classroom', (req, res) => {
-    if (!req.session.cart || req.session.cart.length === 0) {
-        return res.redirect('/');
-    }
-    
+    if (!req.session.cart || req.session.cart.length === 0) return res.redirect('/');
     const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const minOrder = 100;
-    if (total < minOrder) {
-        return res.redirect('/cart?error=minOrder');
-    }
+    if (total < 100) return res.redirect('/cart?error=minOrder');
     
     const floors = ['-1', '0', '1', '2', '3', '4'];
     const rooms = [];
@@ -159,137 +173,51 @@ app.get('/classroom', (req, res) => {
             });
         }
     }
-    
     res.render('classroom', { rooms: rooms });
 });
 
-// Save classroom
 app.post('/save-classroom', (req, res) => {
     req.session.classroom = req.body.classroom;
     res.redirect('/camera');
 });
 
-// Camera page
+// 6. CAMERA & UPLOAD
 app.get('/camera', (req, res) => {
-    if (!req.session.classroom) {
-        return res.redirect('/classroom');
-    }
+    if (!req.session.classroom) return res.redirect('/classroom');
     res.render('camera');
 });
 
-// Upload ID
 app.post('/upload-id', upload.single('idPhoto'), (req, res) => {
-    if (req.file) {
-        req.session.idPhoto = req.file.filename;
-    }
+    if (req.file) req.session.idPhoto = req.file.filename;
     res.redirect('/payment');
 });
 
-// Payment page
+// 7. PAYMENT PAGES
 app.get('/payment', (req, res) => {
-    if (!req.session.idPhoto) {
-        return res.redirect('/camera');
-    }
+    if (!req.session.idPhoto) return res.redirect('/camera');
     req.session.paymentVerified = false;
     const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     res.render('payment', { upiId: 'suryasreemanth01@okicici', total: total });
 });
 
-// UPI Payment page
 app.get('/upi-payment', (req, res) => {
-    if (!req.session.idPhoto) {
-        return res.redirect('/camera');
-    }
+    if (!req.session.idPhoto) return res.redirect('/camera');
     req.session.paymentVerified = false;
     const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     res.render('upi-payment', { upiId: 'suryasreemanth01@okicici', total: total, classroom: req.session.classroom || 'Not specified' });
 });
 
-// QR Payment page
 app.get('/qr-payment', (req, res) => {
-    if (!req.session.idPhoto) {
-        return res.redirect('/camera');
-    }
+    if (!req.session.idPhoto) return res.redirect('/camera');
     req.session.paymentVerified = false;
     const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    res.render('qr-payment', { upiId: 'suryasreemanth01@okicici', total: total, classroom: req.session.classroom || 'Not specified' });
-});
-// ==================== AUTH ROUTES (USERS) ====================
-
-// Render Sign Up page
-app.get('/signup', (req, res) => {
-    res.render('signup', { error: null });
+    res.render('qr-payment', { 
+        upiId: 'qrscan@pay', 
+        total: total, 
+        classroom: req.session.classroom || 'Not specified' 
+    });
 });
 
-// Handle Sign Up (Save to Supabase 'users' table)
-app.post('/signup', async (req, res) => {
-    const { full_name, email, password } = req.body;
-
-    // 1. Check if user already exists in the 'users' table
-    const { data: existingUser, error: checkError } = await supabase
-        .from('users')
-        .select('email')
-        .eq('email', email);
-
-    if (checkError) {
-        console.log("Check user error:", checkError.message);
-        return res.render('signup', { error: "Database error. Please try again." });
-    }
-
-    if (existingUser && existingUser.length > 0) {
-        return res.render('signup', { error: "An account with this email already exists." });
-    }
-
-    // 2. Insert the new user into Supabase
-    const { error: insertError } = await supabase
-        .from('users')
-        .insert([{ full_name: full_name, email: email, password: password }]);
-
-    if (insertError) {
-        console.log("Signup Error:", insertError.message);
-        return res.render('signup', { error: "Error creating account. Please try again." });
-    }
-
-    // 3. Success! Redirect to login
-    res.redirect('/login');
-});
-
-// Render Login page
-app.get('/login', (req, res) => {
-    res.render('login', { error: null });
-});
-
-// Handle Login (Check Supabase 'users' table)
-app.post('/login', async (req, res) => {
-    const { email, password } = req.body;
-
-    // 1. Check if user exists in Supabase
-    const { data: user, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .single(); // Expect exactly one user
-
-    if (error || !user) {
-        return res.render('login', { error: "Invalid email or password." });
-    }
-
-    // 2. Check if password matches
-    if (user.password !== password) {
-        return res.render('login', { error: "Invalid email or password." });
-    }
-
-    // 3. Save user info in session (Logged in!)
-    req.session.user = user;
-    console.log(`✅ User ${user.full_name} logged in!`);
-    res.redirect('/');
-});
-
-// Logout Route
-app.get('/logout', (req, res) => {
-    req.session.user = null;
-    res.redirect('/login');
-});
 // ==================== PAYMENT VERIFICATION ====================
 
 app.get('/check-payment-status', (req, res) => {
@@ -299,18 +227,20 @@ app.get('/check-payment-status', (req, res) => {
     });
 });
 
-// Simulate payment
 app.post('/simulate-payment', async (req, res) => {
     req.session.paymentVerified = true;
-    console.log('💰 SIMULATED PAYMENT DETECTED');
-    await sendOrderEmail(req.session);
-    req.session.destroy();
-    res.redirect('/');
+    res.json({ success: true, paymentVerified: true });
 });
 
-// ==================== FINALIZE ORDER (SAVE TO SUPABASE) ====================
+// ==================== PROCESS ORDER WITH EMAIL ====================
+
+// ==================== PROCESS ORDER WITH EMAIL ====================
 
 app.post('/process-payment', async (req, res) => {
+    console.log('🔍 process-payment called');
+    console.log('📊 paymentVerified:', req.session.paymentVerified);
+    console.log('📦 Cart items:', req.session.cart);
+
     if (!req.session.paymentVerified) {
         console.log('❌ Payment not verified - Order BLOCKED!');
         return res.status(400).send(`
@@ -319,43 +249,220 @@ app.post('/process-payment', async (req, res) => {
             <a href="/payment">Go back to payment</a>
         `);
     }
-    
+
+    console.log('✅ Payment verified - Sending email...');
+
     try {
         const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const classroom = req.session.classroom || 'Not specified';
         
-        // Save to Supabase 'orders' table
-        const { error } = await supabase
-            .from('orders')
-            .insert([{
-                classroom: req.session.classroom || 'Not specified',
-                items: req.session.cart,
-                total: total,
-                upi_id: 'suryasreemanth01@okicici',
-                id_photo: req.session.idPhoto || '',
-                status: 'pending',
-                user_email: 'guest@college.com' // Placeholder email for now
-            }]);
+        // Format order items
+        let orderItemsText = '';
+        let orderItemsHTML = '';
+        req.session.cart.forEach(item => {
+            orderItemsText += `${item.name} x${item.quantity} = ₹${item.price * item.quantity}\n`;
+            orderItemsHTML += `
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.name}</td>
+                    <td style="padding: 10px; text-align: center; border-bottom: 1px solid #ddd;">${item.quantity}</td>
+                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #ddd;">₹${item.price * item.quantity}</td>
+                </tr>
+            `;
+        });
 
-        if (error) {
-            console.error('❌ Supabase insert error:', error.message);
-            return res.status(500).send('Error saving order to database');
+        // ========== SEND EMAIL ==========
+        const mailOptions = {
+            from: 'suryasreemanth01@gmail.com',
+            to: 'suryasreemanth01@gmail.com',
+            subject: '🍽️ New Canteen Order Received!',
+            text: `
+=====================================
+      NEW CANTEEN ORDER
+=====================================
+
+📅 Date: ${new Date().toLocaleString()}
+🏫 Classroom: ${classroom}
+📸 ID Photo: ${req.session.idPhoto || 'Not uploaded'}
+✅ Payment: VERIFIED
+
+📋 ORDER DETAILS:
+-------------------------------------
+${orderItemsText}
+-------------------------------------
+
+💰 TOTAL: ₹${total}
+
+=====================================
+    Thank you!
+=====================================
+            `,
+            html: `
+            <div style="font-family: Arial; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                <div style="background: #667eea; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h2 style="color: white; margin: 0;">🍽️ New Canteen Order!</h2>
+                </div>
+                <div style="padding: 20px;">
+                    <p><strong>📅 Date:</strong> ${new Date().toLocaleString()}</p>
+                    <p><strong>🏫 Classroom:</strong> ${classroom}</p>
+                    <p><strong>📸 ID Photo:</strong> ${req.session.idPhoto || 'Not uploaded'}</p>
+                    <p><strong>✅ Payment:</strong> <span style="color: green;">VERIFIED</span></p>
+                    
+                    <h3>📋 Order Details:</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #667eea; color: white;">
+                                <th style="padding: 10px; text-align: left;">Item</th>
+                                <th style="padding: 10px; text-align: center;">Qty</th>
+                                <th style="padding: 10px; text-align: right;">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${orderItemsHTML}
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight: bold; background: #f0f0f0;">
+                                <td colspan="2" style="padding: 10px; text-align: right;">Total:</td>
+                                <td style="padding: 10px; text-align: right; color: #667eea;">₹${total}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    
+                    <div style="text-align: center; margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px;">
+                        <p style="color: #2e7d32; margin: 0;">✅ Order Confirmed!</p>
+                    </div>
+                </div>
+            </div>
+            `
+        };
+
+        // Send email
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Order email sent successfully!');
+        console.log('📧 Email ID:', info.messageId);
+        console.log('📧 Sent to:', info.accepted);
+
+        // Save to PocketBase
+        const orderData = {
+            classroom: classroom,
+            items: req.session.cart,
+            total: total,
+            status: 'pending',
+            user_email: req.session.user ? req.session.user.email : 'guest@college.com'
+        };
+        
+        const formData = new FormData();
+        for (const key in orderData) {
+            formData.append(key, JSON.stringify(orderData[key]));
         }
 
-        console.log('✅ Order saved to Supabase!');
-        await sendOrderEmail(req.session);
+        const response = await fetch(`${PB_URL}/api/collections/orders/records`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error('Failed to save order');
         
+        console.log('✅ Order saved to PocketBase!');
+
         req.session.destroy();
         res.redirect('/');
     } catch (error) {
         console.error('❌ Error processing order:', error);
-        res.status(500).send('Error processing order');
+        res.status(500).send('Error: ' + error.message);
     }
+});
+
+
+// ==================== SIGNUP & LOGIN ====================
+
+app.get('/signup', (req, res) => { 
+    res.render('signup', { error: null }); 
+});
+
+app.post('/signup', async (req, res) => {
+    const { full_name, email, password } = req.body;
+    try {
+        const checkRes = await fetch(`${PB_URL}/api/collections/users/records?filter=email='${email}'`);
+        const checkData = await checkRes.json();
+        if (checkData.items && checkData.items.length > 0) {
+            return res.render('signup', { error: "An account with this email already exists." });
+        }
+
+        const createRes = await fetch(`${PB_URL}/api/collections/users/records`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                full_name: full_name,
+                email: email,
+                password: password,
+                passwordConfirm: password
+            })
+        });
+
+        if (!createRes.ok) {
+            const errorData = await createRes.text();
+            console.log("PocketBase Error:", errorData);
+            throw new Error("Signup failed");
+        }
+        
+        res.redirect('/login');
+    } catch (error) {
+        console.log("Signup Error:", error.message);
+        res.render('signup', { error: "Error creating account. Please try again." });
+    }
+});
+
+app.get('/login', (req, res) => { 
+    res.render('login', { error: null }); 
+});
+
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const response = await fetch(`${PB_URL}/api/collections/users/auth-with-password`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                identity: email,
+                password: password
+            })
+        });
+
+        const text = await response.text();
+
+        if (!response.ok) {
+            return res.render("login", {
+                error: "Invalid email or password."
+            });
+        }
+
+        const data = JSON.parse(text);
+        req.session.user = data.record;
+        console.log("✅ User logged in:", data.record.email);
+
+        return res.redirect("/");
+
+    } catch (err) {
+        console.log("Login Error:", err);
+        return res.render("login", {
+            error: "Invalid email or password."
+        });
+    }
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/login');
+    });
 });
 
 // ==================== ADMIN ROUTES ====================
 
-app.get('/admin-login', (req, res) => {
-    res.render('admin-login');
+app.get('/admin-login', (req, res) => { 
+    res.render('admin-login'); 
 });
 
 app.post('/admin-login', (req, res) => {
@@ -369,34 +476,24 @@ app.post('/admin-login', (req, res) => {
 });
 
 app.get('/admin/dashboard', async (req, res) => {
-    if (!req.session.isAdmin) {
-        return res.redirect('/admin-login');
-    }
-    
+    if (!req.session.isAdmin) return res.redirect('/admin-login');
     try {
-        const { data: orders, error } = await supabase
-            .from('orders')
-            .select('*')
-            .order('id', { ascending: false });
-
-        if (error) {
-            console.error("Error fetching orders:", error.message);
-            return res.status(500).send('Error loading dashboard');
-        }
+        const response = await fetch(`${PB_URL}/api/collections/orders/records?sort=-created`);
+        const data = await response.json();
+        const orders = data.items || [];
 
         const totalOrders = orders.length;
         const pendingOrders = orders.filter(o => o.status === 'pending').length;
-        
-        const today = new Date().toISOString().split('T')[0];
-        const todayOrders = orders.filter(o => o.created_at && o.created_at.startsWith(today));
-        const todayRevenue = todayOrders.reduce((sum, order) => sum + order.total, 0);
+        const todayRevenue = orders
+            .filter(o => o.created && new Date(o.created).toDateString() === new Date().toDateString())
+            .reduce((sum, o) => sum + o.total, 0);
 
         res.render('admin-dashboard', {
             orders: orders,
             totalOrders: totalOrders,
             pendingOrders: pendingOrders,
             todayRevenue: todayRevenue,
-            todayOrders: todayOrders.length
+            todayOrders: orders.filter(o => new Date(o.created).toDateString() === new Date().toDateString()).length
         });
     } catch (error) {
         console.error('Error loading dashboard:', error);
@@ -405,26 +502,17 @@ app.get('/admin/dashboard', async (req, res) => {
 });
 
 app.post('/admin/update-order', async (req, res) => {
-    if (!req.session.isAdmin) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
+    if (!req.session.isAdmin) return res.status(401).json({ error: 'Unauthorized' });
     try {
         const { orderId, status } = req.body;
-
-        const { error } = await supabase
-            .from('orders')
-            .update({ status: status })
-            .eq('id', orderId);
-
-        if (error) {
-            console.error('Error updating order:', error.message);
-            return res.status(500).json({ error: 'Update failed' });
-        }
-
+        const response = await fetch(`${PB_URL}/api/collections/orders/records/${orderId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: status })
+        });
+        if (!response.ok) throw new Error('Update failed');
         res.json({ success: true });
     } catch (error) {
-        console.error('Error updating order:', error);
         res.status(500).json({ error: 'Update failed' });
     }
 });
@@ -434,90 +522,13 @@ app.get('/admin/logout', (req, res) => {
     res.redirect('/admin-login');
 });
 
-// ==================== EMAIL FUNCTION ====================
-
-async function sendOrderEmail(session) {
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: 'suryasreemanth01@gmail.com',
-            pass: 'rfaw wexf avax ozld'
-        }
-    });
-
-    const orderItems = session.cart.map(item => 
-        `${item.name} x${item.quantity} = ₹${item.price * item.quantity}`
-    ).join('\n');
-
-    const total = session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-    const mailOptions = {
-        from: 'suryasreemanth01@gmail.com',
-        to: 'suryasreemanth01@gmail.com',
-        subject: '🍽️ New Canteen Order Received!',
-        text: `
-=====================================
-      NEW CANTEEN ORDER
-=====================================
-
-📅 Date & Time: ${new Date().toLocaleString()}
-🏫 Classroom: ${session.classroom || 'Not specified'}
-📸 ID Photo: ${session.idPhoto || 'Not uploaded'}
-✅ Payment Status: VERIFIED
-
-📋 ORDER DETAILS:
--------------------------------------
-${orderItems}
--------------------------------------
-
-💰 TOTAL AMOUNT: ₹${total}
-
-=====================================
-    Thank you for using Canteen App!
-=====================================
-        `
-    };
-
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log('✅ Order email sent successfully!');
-    } catch (error) {
-        console.error('❌ Error sending email:', error);
-    }
-}
-
-// ==================== CLEANUP OLD UPLOADS ====================
-
-setInterval(() => {
-    const uploadDir = path.join(__dirname, 'public/uploads');
-    if (!fs.existsSync(uploadDir)) return;
-
-    try {
-        const files = fs.readdirSync(uploadDir);
-        const now = Date.now();
-        const oneDay = 24 * 60 * 60 * 1000;
-
-        files.forEach(file => {
-            const filePath = path.join(uploadDir, file);
-            const stats = fs.statSync(filePath);
-            const fileAge = now - stats.mtimeMs;
-
-            if (fileAge > oneDay) {
-                fs.unlinkSync(filePath);
-                console.log(`🗑️ Deleted old file: ${file}`);
-            }
-        });
-    } catch (error) {
-        console.error('Error cleaning uploads:', error);
-    }
-}, 60 * 60 * 1000);
-
 // ==================== START SERVER ====================
-
 app.listen(PORT, () => {
-    console.log(`🚀 Server is running on http://localhost:${PORT}`);
-    console.log(`🛍️  Customer URL: http://localhost:${PORT}`);
-    console.log(`🔐 Admin URL: http://localhost:${PORT}/admin-login`);
-    console.log(`   Username: admin`);
-    console.log(`   Password: canteen123`);
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📧 Test email: http://localhost:${PORT}/test-email`);
+});
+app.post('/simulate-payment', async (req, res) => {
+    console.log('💰 SIMULATED PAYMENT');
+    req.session.paymentVerified = true;
+    res.json({ success: true, paymentVerified: true });
 });

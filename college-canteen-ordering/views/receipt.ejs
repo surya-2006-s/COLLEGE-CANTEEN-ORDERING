@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Receipt - College Canteen</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .receipt-container {
+            max-width: 840px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.15);
+        }
+        .receipt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .receipt-header h1 {
+            font-size: 32px;
+            color: #333;
+        }
+        .receipt-status {
+            background: #e6ffed;
+            color: #2f8a34;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .receipt-section {
+            margin-bottom: 30px;
+        }
+        .receipt-section h2 {
+            font-size: 22px;
+            color: #ff6b6b;
+            margin-bottom: 15px;
+        }
+        .receipt-items {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .receipt-items th,
+        .receipt-items td {
+            padding: 16px 18px;
+            border-bottom: 1px solid #f0f0f0;
+            text-align: left;
+        }
+        .receipt-items th {
+            color: #555;
+            font-weight: 700;
+        }
+        .receipt-items td {
+            color: #333;
+        }
+        .receipt-total {
+            text-align: right;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-top: 20px;
+        }
+        .receipt-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .receipt-footer p {
+            color: #666;
+        }
+        .receipt-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .receipt-actions a,
+        .receipt-actions button {
+            display: inline-block;
+            padding: 14px 28px;
+            border-radius: 30px;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+        .receipt-actions a:hover,
+        .receipt-actions button:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container receipt-container">
+        <div class="receipt-header">
+            <div>
+                <h1>Order Receipt</h1>
+                <p>Thank you for your purchase!</p>
+            </div>
+            <div class="receipt-status">Payment Verified</div>
+        </div>
+
+        <div class="receipt-section">
+            <h2>Order Summary</h2>
+            <table class="receipt-items">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% order.items.forEach(item => { %>
+                    <tr>
+                        <td><%= item.name %></td>
+                        <td><%= item.quantity %></td>
+                        <td>₹<%= item.price %></td>
+                        <td>₹<%= item.price * item.quantity %></td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+
+            <div class="receipt-total">Total Paid: ₹<%= order.total %></div>
+        </div>
+
+        <div class="receipt-section">
+            <h2>Order Details</h2>
+            <p><strong>Classroom:</strong> <%= order.classroom %></p>
+            <p><strong>UPI ID:</strong> <%= order.upi_id %></p>
+            <p><strong>User Email:</strong> <%= order.user_email %></p>
+            <p><strong>Order Time:</strong> <%= new Date(order.created_at).toLocaleString() %></p>
+        </div>
+
+        <div class="receipt-footer">
+            <p>We are preparing your order and will deliver it soon.</p>
+            <div class="receipt-actions">
+                <a href="/">Back to Home</a>
+                <a href="/receipt/download">Download Receipt</a>
+                <button onclick="window.print()">Print Receipt</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
