@@ -5,47 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= category %> - College Canteen</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .menu-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .menu-header h2 {
+            font-size: 28px;
+            color: #333;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 10px;
+        }
+        .menu-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .menu-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .item-info h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+        .item-info p {
+            margin: 5px 0;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        .add-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.3s;
+            margin-top: 5px;
+        }
+        .add-btn:hover {
+            transform: scale(1.05);
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 30px;
+            text-decoration: none;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
+    <%- include('header') %>
+
     <div class="container">
-        <nav class="menu-nav">
-            <a href="/">← Back to Home</a>
-            <% if (user) { %>
-                <a href="/logout" class="button button-secondary small-button">Logout</a>
-            <% } else { %>
-                <a href="/login" class="button button-primary small-button">Login</a>
-                <a href="/signup" class="button button-secondary small-button">Sign Up</a>
-            <% } %>
-            <a href="/cart" class="button button-primary small-button">Cart (<%= cart ? cart.length : 0 %>)</a>
-        </nav>
-        
-        <h1><%= category %></h1>
-        
-        <div class="menu-items">
+        <div class="menu-header">
+            <h2>🍽️ <%= category %></h2>
+        </div>
+
+        <div class="menu-grid">
             <% items.forEach(item => { %>
-    <div class="menu-item" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; align-items: center; gap: 15px;">
-        
-        <!-- THIS IS THE NEW IMAGE CODE -->
-        <% if (item.image_url) { %>
-            <img src="<%= item.image_url %>" alt="<%= item.name %>" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
-        <% } %>
-        <!-- END OF NEW IMAGE CODE -->
-
-        <div>
-            <h3 style="margin: 0;"><%= item.name %></h3>
-            <p style="margin: 5px 0; color: #666;">₹<%= item.price %></p>
-            <!-- If you have a 'Add to cart' button/form, make sure it stays here! -->
+                <div class="menu-item">
+                    <% if (item.image_url) { %>
+                        <img src="<%= item.image_url %>" alt="<%= item.name %>">
+                    <% } %>
+                    
+                    <div class="item-info">
+                        <h3><%= item.name %></h3>
+                        <p>₹<%= item.price %></p>
+                        
+                        <form action="/add-to-cart" method="POST">
+                            <input type="hidden" name="itemId" value="<%= item.id %>">
+                            <input type="hidden" name="itemName" value="<%= item.name %>">
+                            <input type="hidden" name="price" value="<%= item.price %>">
+                            <input type="hidden" name="category" value="<%= category %>">
+                            <button type="submit" class="add-btn">Add to Cart</button>
+                        </form>
+                    </div>
+                </div>
+            <% }) %>
         </div>
 
-    </div>
-<% }) %>
-        </div>
-        
-        <% if (cart && cart.length > 0) { %>
-        <div class="order-tab">
-            <a href="/cart">🛒 View Cart (₹<%= cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) %>)</a>
-        </div>
-        <% } %>
+        <a href="/" class="back-link">← Back to Menu</a>
     </div>
 </body>
 </html>
