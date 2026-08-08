@@ -11,7 +11,7 @@
 
     <!-- Top Right: User Greeting and Cart -->
     <div style="display: flex; align-items: center; gap: 20px;">
-        <!-- ADDED SAFETY CHECK HERE -->
+        <!-- Added safety check so Login page doesn't crash -->
         <% if (typeof user !== 'undefined' && user) { %>
             <span style="font-weight: bold; color: #333;">👋 Welcome, <strong><%= user.full_name || user.email %></strong></span>
             <a href="/logout" style="color: #ff6b6b; text-decoration: none; font-weight: bold;">Logout</a>
@@ -24,3 +24,4 @@
     </div>
 
 </header>
+
