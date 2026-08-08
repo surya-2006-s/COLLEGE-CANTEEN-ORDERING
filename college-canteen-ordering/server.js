@@ -66,17 +66,20 @@ transporter.verify((error, success) => {
 // ==================== ROUTES ====================
 
 // 1. HOME PAGE
+// 1. HOME PAGE
 app.get('/', async (req, res) => {
     req.session.cart = req.session.cart || [];
     let categories = [];
 
     try {
+        // Fetch all menu items
         const { data, error } = await supabase
             .from('menu')
             .select('category')
             .order('category');
 
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
+            // Get unique categories to prevent duplicates
             const uniqueCategories = [...new Set(data.map(item => item.category))];
             categories = uniqueCategories.map(cat => ({ name: cat, slug: cat }));
         }
