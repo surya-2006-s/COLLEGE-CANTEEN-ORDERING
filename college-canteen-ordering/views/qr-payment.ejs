@@ -108,7 +108,7 @@
 
             // 2. Setup Razorpay Options
             const options = {
-                key: 'rzp_test_TNKhAetJpFJyCT'
+                key: 'rzp_test_TNKhAetJpFJyCT',
 // REPLACE WITH YOUR KEY ID
                 amount: order.amount,
                 currency: order.currency,
@@ -136,7 +136,7 @@
                     }
                 },
                 prefill: {
-                    name: '<%= user ? user.full_name : "Guest" %>',
+                    name: '<%= typeof user !== "undefined" && user ? user.full_name : "Guest" %>',
                     email: '<%= user ? user.email : "" %>',
                     contact: '9999999999'
                 },

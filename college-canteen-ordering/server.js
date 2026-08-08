@@ -53,18 +53,20 @@ console.log('🔗 Supabase connected');
 const razorpay = new Razorpay({
     key_id: 'rzp_test_TNKhAetJpFJyCT',
 
-    key_secret: 'wD3An2UJpwGLz3wM9TpDDiEl'
-    
+    key_secret: 'wD3An2UJpwGLz3wM9TpDDiEl',
 });
 
 // ==================== EMAIL SETUP ====================
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER || 'suryasreemanth01@gmail.com',
         pass: process.env.EMAIL_PASS || 'klbi vkdj huty fuwn'
     }
 });
+
 
 transporter.verify((error, success) => {
     if (error) {
@@ -268,7 +270,7 @@ app.post('/verify-payment', async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
-    const expectedSignature = crypto.createHmac('sha256', 'YOUR_RAZORPAY_KEY_SECRET')
+    const expectedSignature = crypto.createHmac('sha256', 'wD3An2UJpwGLz3wM9TpDDiEl')
                                      .update(body.toString())
                                      .digest('hex');
 
