@@ -81,7 +81,6 @@
                 UPI ID: <strong><%= upiId %></strong>
             </div>
 
-            <!-- QR Code Placeholder (You can replace this with a real QR image later) -->
             <div class="qr-placeholder">
                 <span>Scan to Pay<br>QR Code</span>
             </div>
@@ -90,33 +89,26 @@
                 Total: ₹<%= total %>
             </div>
 
-            <!-- REAL PAYMENT BUTTON WITH RAZORPAY -->
             <button id="pay-button" class="btn-pay">💳 Pay Now</button>
         </div>
     </div>
 
-    <!-- LOAD RAZORPAY SCRIPT -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     <script>
         document.getElementById('pay-button').onclick = async function(e) {
             e.preventDefault();
-            
-            // 1. Tell server to create an order
             const response = await fetch('/create-razorpay-order', { method: 'POST' });
             const order = await response.json();
 
-            // 2. Setup Razorpay Options
             const options = {
                 key: 'rzp_test_TNKhAetJpFJyCT',
-// REPLACE WITH YOUR KEY ID
                 amount: order.amount,
                 currency: order.currency,
                 name: 'KLH College Canteen',
                 description: 'Canteen Order Payment',
                 order_id: order.order_id,
                 handler: async function (response) {
-                    // 3. Auto verify payment on the backend
                     const verifyRes = await fetch('/verify-payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -125,11 +117,9 @@
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature
                         })
-                    });
-                    
+                    });                    
                     const verifyData = await verifyRes.json();
                     if (verifyData.success) {
-                        // 4. Instant Redirect to Home Page
                         window.location.href = verifyData.redirectUrl;
                     } else {
                         alert("Payment Failed or Not Verified.");
@@ -137,14 +127,13 @@
                 },
                 prefill: {
                     name: '<%= typeof user !== "undefined" && user ? user.full_name : "Guest" %>',
-                    email: '<%= user ? user.email : "" %>',
+                    email: '<%= typeof user !== "undefined" && user ? user.email : "" %>',
                     contact: '9999999999'
                 },
                 theme: {
                     color: '#ff6b6b'
                 }
             };
-
             const rzp1 = new Razorpay(options);
             rzp1.open();
         };
