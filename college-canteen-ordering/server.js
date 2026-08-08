@@ -6,6 +6,8 @@ const multer = require('multer');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 const { createClient } = require('@supabase/supabase-js');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -46,6 +48,15 @@ const supabase = createClient(
 
 console.log('🔗 Supabase connected');
 
+// ==================== RAZORPAY SETUP ====================
+// REPLACE THESE 2 LINES WITH YOUR REAL KEYS FROM RAZORPAY DASHBOARD
+const razorpay = new Razorpay({
+    key_id: 'rzp_test_TNKhAetJpFJyCT',
+
+    key_secret: 'wD3An2UJpwGLz3wM9TpDDiEl'
+    
+});
+
 // ==================== EMAIL SETUP ====================
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -66,20 +77,17 @@ transporter.verify((error, success) => {
 // ==================== ROUTES ====================
 
 // 1. HOME PAGE
-// 1. HOME PAGE
 app.get('/', async (req, res) => {
     req.session.cart = req.session.cart || [];
     let categories = [];
 
     try {
-        // Fetch all menu items
         const { data, error } = await supabase
             .from('menu')
             .select('category')
             .order('category');
 
-        if (!error && data && data.length > 0) {
-            // Get unique categories to prevent duplicates
+        if (!error && data) {
             const uniqueCategories = [...new Set(data.map(item => item.category))];
             categories = uniqueCategories.map(cat => ({ name: cat, slug: cat }));
         }
@@ -224,19 +232,52 @@ app.get('/qr-payment', (req, res) => {
     });
 });
 
-// ==================== PAYMENT VERIFICATION ====================
+// ==================== RAZORPAY PAYMENT ROUTES ====================
 
-app.get('/check-payment-status', (req, res) => {
-    res.json({ 
-        paymentVerified: req.session.paymentVerified || false,
-        message: req.session.paymentVerified ? 'Payment verified!' : 'Waiting for payment...'
-    });
+// 1. Create Razorpay Order
+app.post('/create-razorpay-order', async (req, res) => {
+    if (!req.session.cart || req.session.cart.length === 0) {
+        return res.status(400).json({ error: 'Cart is empty' });
+    }
+
+    const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const amountInPaise = total * 100;
+
+    const options = {
+        amount: amountInPaise,
+        currency: 'INR',
+        receipt: `receipt_${Date.now()}`,
+        payment_capture: '1'
+    };
+
+    try {
+        const response = await razorpay.orders.create(options);
+        res.json({
+            order_id: response.id,
+            currency: response.currency,
+            amount: response.amount
+        });
+    } catch (error) {
+        console.error('Razorpay Order Error:', error);
+        res.status(500).json({ error: 'Failed to create order' });
+    }
 });
 
-app.post('/simulate-payment', async (req, res) => {
-    console.log('💰 SIMULATED PAYMENT');
-    req.session.paymentVerified = true;
-    res.json({ success: true, paymentVerified: true });
+// 2. Verify Payment and Process Order
+app.post('/verify-payment', async (req, res) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    const body = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSignature = crypto.createHmac('sha256', 'YOUR_RAZORPAY_KEY_SECRET')
+                                     .update(body.toString())
+                                     .digest('hex');
+
+    if (expectedSignature === razorpay_signature) {
+        req.session.paymentVerified = true;
+        res.json({ success: true, redirectUrl: '/' });
+    } else {
+        res.status(400).json({ success: false, message: 'Payment verification failed' });
+    }
 });
 
 // ==================== PROCESS ORDER WITH EMAIL ====================
@@ -261,7 +302,6 @@ app.post('/process-payment', async (req, res) => {
         const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const classroom = req.session.classroom || 'Not specified';
         
-        // Format order items
         let orderItemsText = '';
         let orderItemsHTML = '';
         req.session.cart.forEach(item => {
@@ -275,7 +315,6 @@ app.post('/process-payment', async (req, res) => {
             `;
         });
 
-        // ========== SEND EMAIL ==========
         const mailOptions = {
             from: 'suryasreemanth01@gmail.com',
             to: 'suryasreemanth01@gmail.com',
@@ -340,12 +379,10 @@ ${orderItemsText}
             `
         };
 
-        // Send email
         const info = await transporter.sendMail(mailOptions);
         console.log('✅ Order email sent successfully!');
         console.log('📧 Email ID:', info.messageId);
 
-        // ========== SAVE TO SUPABASE ==========
         const orderData = {
             classroom: classroom,
             items: req.session.cart,
@@ -383,7 +420,6 @@ app.post('/signup', async (req, res) => {
     const { full_name, email, password } = req.body;
     
     try {
-        // Check if user exists
         const { data: existing, error: checkError } = await supabase
             .from('users')
             .select('email')
@@ -394,7 +430,6 @@ app.post('/signup', async (req, res) => {
             return res.render('signup', { error: "Email already exists!" });
         }
         
-        // Create user
         const { data, error } = await supabase
             .from('users')
             .insert([{ full_name, email, password }])

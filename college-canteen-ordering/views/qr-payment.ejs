@@ -6,445 +6,148 @@
     <title>QR Payment - College Canteen</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-                        url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600') no-repeat center center fixed;
-            background-size: cover;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 450px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 25px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        .payment-container {
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             text-align: center;
         }
-
-        h2 {
-            color: #ff6b6b;
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            color: #666;
+        .payment-container h2 {
             margin-bottom: 20px;
-            font-size: 16px;
+            color: #333;
         }
-
-        .amount-display {
-            font-size: 48px;
+        .upi-id {
+            font-size: 18px;
             font-weight: bold;
-            color: white;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-        }
-
-        .qr-box {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            border: 2px dashed #ff6b6b;
-        }
-
-        .qr-box img {
-            width: 220px;
-            height: 220px;
-        }
-
-        .qr-box p {
-            margin-top: 10px;
             color: #ff6b6b;
-            font-weight: bold;
+            margin: 10px 0 20px 0;
         }
-
-        .status-box {
-            padding: 15px;
+        .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
             border-radius: 10px;
-            margin: 15px 0;
-            text-align: center;
-            font-weight: bold;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 14px;
         }
-
-        .status-waiting {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .status-success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 10px 0;
-            transition: all 0.3s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-primary {
-            background: #007bff;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #0069d9;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* ===== SUCCESS PAGE ===== */
-        #successState .icon {
-            font-size: 80px;
-            animation: bounceIn 0.8s ease;
-        }
-
-        #successState .title {
-            font-size: 32px;
-            font-weight: bold;
-            color: #28a745;
-            margin: 15px 0;
-        }
-
-        .order-details {
-            background: #e8f5e9;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            text-align: left;
-        }
-
-        .order-details p {
-            margin: 8px 0;
-            color: #2e7d32;
-        }
-
-        /* ===== FAILURE PAGE ===== */
-        #failureState .icon {
-            font-size: 80px;
-            animation: bounceIn 0.8s ease;
-        }
-
-        #failureState .title {
-            font-size: 32px;
-            font-weight: bold;
-            color: #dc3545;
-            margin: 15px 0;
-        }
-
-        .error-details {
-            background: #f8d7da;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            text-align: left;
-        }
-
-        .error-details p {
-            margin: 8px 0;
-            color: #721c24;
-        }
-
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 15px;
-            color: #ff6b6b;
-            text-decoration: none;
-        }
-
-        .payment-timer {
+        .total-amount {
             font-size: 24px;
             font-weight: bold;
-            color: #ff6b6b;
-            margin: 10px 0;
-        }
-
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.2); }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .upi-id-display {
-            background: #e9ecef;
-            padding: 12px;
-            border-radius: 10px;
-            margin: 15px 0;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .upi-id-display strong {
             color: #333;
+            margin: 20px 0;
+        }
+        .btn-pay {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-top: 20px;
+        }
+        .btn-pay:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255,107,107,0.4);
+        }
+        .classroom-info {
+            color: #666;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
+    <%- include('header') %>
+
     <div class="container">
-
-        <!-- ========================================= -->
-        <!-- WAITING STATE                              -->
-        <!-- ========================================= -->
-        <div id="waitingState">
-            <h2>📷 Scan to Pay</h2>
-            <p class="subtitle">Scan the QR code with any UPI app</p>
-
-            <div class="amount-display">
-                ₹<%= total %>
+        <div class="payment-container">
+            <h2>📱 QR Payment</h2>
+            
+            <div class="classroom-info">
+                <p><strong>Classroom:</strong> <%= classroom %></p>
             </div>
 
-            <div class="qr-box">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=upi://pay?pa=suryasreemanth01@okicici&pn=College%20Canteen&am=<%= total %>&cu=INR&mode=pay" 
-                     alt="Scan to pay ₹<%= total %>">
-                <p>👆 Scan this QR code with your UPI app</p>
+            <div class="upi-id">
+                UPI ID: <strong><%= upiId %></strong>
             </div>
 
-            <div id="statusBox" class="status-box status-waiting">
-                ⏳ Waiting for payment...
+            <!-- QR Code Placeholder (You can replace this with a real QR image later) -->
+            <div class="qr-placeholder">
+                <span>Scan to Pay<br>QR Code</span>
             </div>
 
-            <div id="paymentTimer" class="payment-timer">⏳ Time remaining: 60s</div>
+            <div class="total-amount">
+                Total: ₹<%= total %>
+            </div>
 
-            <button onclick="checkPaymentStatus()" class="btn btn-primary">
-                🔍 Check Payment Status
-            </button>
-
-            <a href="/payment" class="back-link">← Back</a>
+            <!-- REAL PAYMENT BUTTON WITH RAZORPAY -->
+            <button id="pay-button" class="btn-pay">💳 Pay Now</button>
         </div>
-
-        <!-- ========================================= -->
-        <!-- SUCCESS STATE                              -->
-        <!-- ========================================= -->
-        <div id="successState" class="hidden">
-            <div class="icon">✅</div>
-            <div class="title">Payment Successful! 🎉</div>
-            <p style="font-size: 18px; color: #666;">Your order has been confirmed and will be delivered soon! 🍽️</p>
-
-            <div class="order-details">
-                <p><strong>📅 Order Time:</strong> <span id="orderTime"></span></p>
-                <p><strong>🏫 Classroom:</strong> <span id="orderClassroom"></span></p>
-                <p><strong>💰 Amount Paid:</strong> ₹<span id="orderAmount"></span></p>
-                <p style="margin-top: 15px; color: #28a745; font-weight: bold;">
-                    ✅ Order Confirmed!
-                </p>
-                <p style="margin-top: 5px; color: #666; font-size: 14px;">
-                    📧 Order confirmation sent to your email
-                </p>
-            </div>
-
-            <form action="/process-payment" method="POST">
-                <button type="submit" class="btn btn-success">
-                    ✅ Done - Go to Home
-                </button>
-            </form>
-            <br>
-            <a href="/" class="back-link">← Back to Home</a>
-        </div>
-
-        <!-- ========================================= -->
-        <!-- FAILURE STATE                              -->
-        <!-- ========================================= -->
-        <div id="failureState" class="hidden">
-            <div class="icon">❌</div>
-            <div class="title">Payment Failed!</div>
-            <p style="font-size: 18px; color: #666;">We couldn't verify your payment. Please try again.</p>
-
-            <div class="error-details">
-                <p><strong>⏱️ Time Expired</strong></p>
-                <p><strong>🏫 Classroom:</strong> <span id="failureClassroom"></span></p>
-                <p><strong>💰 Amount:</strong> ₹<span id="failureAmount"></span></p>
-                <p style="margin-top: 15px; color: #dc3545; font-weight: bold;">
-                    ❌ Payment not detected or expired.
-                </p>
-                <p style="margin-top: 10px; color: #666; font-size: 14px;">
-                    Please scan the QR code again and complete the payment within 60 seconds.
-                </p>
-            </div>
-
-            <button onclick="retryPayment()" class="btn btn-danger">
-                🔄 Try Again
-            </button>
-            <br>
-            <a href="/payment" class="back-link">← Back</a>
-        </div>
-
     </div>
 
+    <!-- LOAD RAZORPAY SCRIPT -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
     <script>
-        const classroom = '<%= classroom || "Not specified" %>';
-        const total = '<%= total %>';
-        let timeLeft = 60;
-        let timerInterval;
-        let paymentDetected = false;
-
-        // ===== Start Payment Timer =====
-
-        function startPaymentTimer() {
-            timeLeft = 60;
-            const timerDisplay = document.getElementById('paymentTimer');
-            const statusBox = document.getElementById('statusBox');
-
-            timerDisplay.textContent = `⏳ Time remaining: ${timeLeft}s`;
-            statusBox.textContent = '⏳ Waiting for payment...';
-            statusBox.className = 'status-box status-waiting';
-            timerDisplay.style.color = '#ff6b6b';
+        document.getElementById('pay-button').onclick = async function(e) {
+            e.preventDefault();
             
-            timerInterval = setInterval(function() {
-                timeLeft--;
-                timerDisplay.textContent = `⏳ Time remaining: ${timeLeft}s`;
+            // 1. Tell server to create an order
+            const response = await fetch('/create-razorpay-order', { method: 'POST' });
+            const order = await response.json();
 
-                if (timeLeft <= 10) {
-                    timerDisplay.style.color = '#dc3545';
-                }
-
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    if (!paymentDetected) {
-                        timerDisplay.textContent = '⏰ Time Expired!';
-                        statusBox.textContent = '❌ Payment time expired. Please try again.';
-                        statusBox.className = 'status-box status-error';
-                        showFailurePage();
-                    }
-                }
-            }, 1000);
-        }
-
-        // ===== Check Payment Status =====
-
-        function checkPaymentStatus() {
-            console.log('🔍 Checking payment status...');
-            const statusBox = document.getElementById('statusBox');
-            
-            statusBox.textContent = '⏳ Checking...';
-            statusBox.className = 'status-box status-waiting';
-
-            fetch('/check-payment-status')
-                .then(res => res.json())
-                .then(data => {
-                    console.log('📊 Payment status:', data);
-                    if (data.paymentVerified) {
-                        paymentDetected = true;
-                        clearInterval(timerInterval);
-                        statusBox.textContent = '✅ Payment Verified!';
-                        statusBox.className = 'status-box status-success';
-                        showSuccessPage();
+            // 2. Setup Razorpay Options
+            const options = {
+                key: 'rzp_test_TNKhAetJpFJyCT'
+// REPLACE WITH YOUR KEY ID
+                amount: order.amount,
+                currency: order.currency,
+                name: 'KLH College Canteen',
+                description: 'Canteen Order Payment',
+                order_id: order.order_id,
+                handler: async function (response) {
+                    // 3. Auto verify payment on the backend
+                    const verifyRes = await fetch('/verify-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        })
+                    });
+                    
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.success) {
+                        // 4. Instant Redirect to Home Page
+                        window.location.href = verifyData.redirectUrl;
                     } else {
-                        statusBox.textContent = '⏳ Waiting for payment...';
-                        statusBox.className = 'status-box status-waiting';
+                        alert("Payment Failed or Not Verified.");
                     }
-                })
-                .catch(error => {
-                    console.log('❌ Error:', error);
-                    statusBox.textContent = '❌ Error checking payment.';
-                    statusBox.className = 'status-box status-error';
-                });
-        }
+                },
+                prefill: {
+                    name: '<%= user ? user.full_name : "Guest" %>',
+                    email: '<%= user ? user.email : "" %>',
+                    contact: '9999999999'
+                },
+                theme: {
+                    color: '#ff6b6b'
+                }
+            };
 
-        // ===== Show Success Page =====
-
-        function showSuccessPage() {
-            document.getElementById('waitingState').classList.add('hidden');
-            document.getElementById('successState').classList.remove('hidden');
-            document.getElementById('orderTime').textContent = new Date().toLocaleString();
-            document.getElementById('orderClassroom').textContent = classroom;
-            document.getElementById('orderAmount').textContent = total;
-        }
-
-        // ===== Show Failure Page =====
-
-        function showFailurePage() {
-            document.getElementById('waitingState').classList.add('hidden');
-            document.getElementById('failureState').classList.remove('hidden');
-            document.getElementById('failureClassroom').textContent = classroom;
-            document.getElementById('failureAmount').textContent = total;
-        }
-
-        // ===== Retry Payment =====
-
-        function retryPayment() {
-            paymentDetected = false;
-            document.getElementById('failureState').classList.add('hidden');
-            document.getElementById('waitingState').classList.remove('hidden');
-            document.getElementById('statusBox').textContent = '⏳ Waiting for payment...';
-            document.getElementById('statusBox').className = 'status-box status-waiting';
-            document.getElementById('paymentTimer').textContent = '';
-            document.getElementById('paymentTimer').style.color = '#ff6b6b';
-            startPaymentTimer();
-        }
-
-        // ===== Auto-check every 3 seconds =====
-
-        setInterval(function() {
-            checkPaymentStatus();
-        }, 3000);
-
-        // ===== On Page Load =====
-
-        console.log('📄 Page loaded - checking payment status...');
-        setTimeout(function() {
-            checkPaymentStatus();
-        }, 1000);
-
-        startPaymentTimer();
-
-        console.log('💡 Scan QR code to pay.');
-        console.log('🕐 You have 60 seconds to complete the payment.');
+            const rzp1 = new Razorpay(options);
+            rzp1.open();
+        };
     </script>
 </body>
 </html>
