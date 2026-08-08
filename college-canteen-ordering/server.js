@@ -40,7 +40,7 @@ const upload = multer({ storage: storage });
 
 // ==================== SUPABASE SETUP ====================
 const supabase = createClient(
-    'https://hwaejjtfvqjvgaapvuvm.supabase.co', 
+    'https://hsweqjtfvqjvgaapvuvm.supabase.co', 
     'sb_publishable_pjkaDrk_01WAqOZvYrdr7g_WY50OZUM'
 );
 
@@ -516,7 +516,8 @@ app.get('/test', (req, res) => {
 });
 
 // ==================== START SERVER ====================
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`🔗 Supabase connected`);
 });
+
