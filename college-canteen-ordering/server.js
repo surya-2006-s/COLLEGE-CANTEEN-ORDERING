@@ -40,8 +40,8 @@ const upload = multer({ storage: storage });
 
 // ==================== SUPABASE SETUP ====================
 const supabase = createClient(
-    process.env.SUPABASE_URL || 'https://hsweqjtfvqjvgapvuvm.supabase.co',
-    process.env.SUPABASE_KEY || 'sb_publishable_pjkaDrk_01wAq0ZvYrdr7g_WY500...'
+    'https://hwaejjtfvqjvgaapvuvm.supabase.co', 
+    'sb_publishable_pjkaDrk_01WAqOZvYrdr7g_WY50OZUM'
 );
 
 console.log('🔗 Supabase connected');
