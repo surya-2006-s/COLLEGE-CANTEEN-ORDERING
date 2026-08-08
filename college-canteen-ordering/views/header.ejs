@@ -11,10 +11,11 @@
 
     <!-- Top Right: User Greeting and Cart -->
     <div style="display: flex; align-items: center; gap: 20px;">
-        <% if (user) { %>
+        <!-- ADDED SAFETY CHECK HERE -->
+        <% if (typeof user !== 'undefined' && user) { %>
             <span style="font-weight: bold; color: #333;">👋 Welcome, <strong><%= user.full_name || user.email %></strong></span>
             <a href="/logout" style="color: #ff6b6b; text-decoration: none; font-weight: bold;">Logout</a>
-            <a href="/cart" style="color: #28a745; text-decoration: none; font-weight: bold;">🛒 Cart (<%= cart ? cart.length : 0 %>)</a>
+            <a href="/cart" style="color: #28a745; text-decoration: none; font-weight: bold;">🛒 Cart (<%= typeof cart !== 'undefined' && cart ? cart.length : 0 %>)</a>
         <% } else { %>
             <span style="color: #666;">👤 Guest</span>
             <a href="/login" style="color: #ff6b6b; text-decoration: none; font-weight: bold;">Login</a>
