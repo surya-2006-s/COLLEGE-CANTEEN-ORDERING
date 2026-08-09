@@ -51,9 +51,9 @@ console.log('🔗 Supabase connected');
 // ==================== RAZORPAY SETUP ====================
 // REPLACE THESE 2 LINES WITH YOUR REAL KEYS FROM RAZORPAY DASHBOARD
 const razorpay = new Razorpay({
-    key_id: 'rzp_test_TNdjjbfu6lYA78',
+    key_id: 'rzp_live_TNdspwXjDdccUR',
 
-    key_secret: 'aDc5VCYCAtz17VHEwN6lB4fi',
+    key_secret: 'BP3zCo3J4Qx0i1tvCOX9ki3u',
 });
 
 // ==================== EMAIL SETUP ====================
