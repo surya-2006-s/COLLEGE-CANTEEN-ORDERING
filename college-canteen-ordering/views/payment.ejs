@@ -116,7 +116,7 @@
             font-size: 14px;
         }
         
-        /* QR Scanner Option Section - NEW */
+        /* QR Scanner Option Section */
         .qr-option-section {
             margin-top: 40px;
             padding-top: 30px;
@@ -212,36 +212,25 @@
                 <strong>📌 Note:</strong> After clicking "Pay Now", your UPI app will open with ₹<%= total %> pre-filled. Just enter your UPI PIN to complete payment.
             </div>
 
-            <!-- ========== QR SCANNER OPTION SECTION - ADDED HERE ========== -->
+            <!-- ========== QR SCANNER & RAZORPAY OPTION - UPDATED ========== -->
             <div class="qr-option-section">
-                <div class="qr-option-title">🔍 Prefer to scan instead?</div>
-                <div class="qr-option-card" onclick="window.location.href='/qr-payment'">
-                    <div class="qr-icon">📷</div>
-                    <div class="qr-text">Scan QR Code</div>
-                    <div class="qr-subtext">Click here to open QR scanner page</div>
-                    <div style="margin-top: 15px; font-size: 20px; font-weight: bold; color: #ff6b6b;">₹<%= total %></div>
-                </div>
-                <p style="font-size: 13px; color: #666; margin-top: 15px;">
-                    Scan QR code with any UPI app - amount ₹<%= total %> will auto-fill
-                </p>
-            </div>
-            <!-- ========== END QR SCANNER OPTION ========== -->
-
-            <div class="qr-option-section">
-                <div class="qr-option-title">💳 Prefer Razorpay?</div>
-                <div class="qr-option-card" onclick="window.location.href='/razorpay'">
-                    <div class="qr-icon">💰</div>
-                    <div class="qr-text">Pay with Razorpay</div>
-                    <div class="qr-subtext">Secure online payment using Razorpay</div>
+                <div class="qr-option-title">💰 Prefer to pay via Razorpay?</div>
+                <div class="qr-option-card" id="razorpay-pay-btn">
+                    <div class="qr-icon">💳</div>
+                    <div class="qr-text">Pay via Razorpay</div>
+                    <div class="qr-subtext">Secure online payment using UPI, Card, or Netbanking</div>
                     <div style="margin-top: 15px; font-size: 20px; font-weight: bold; color: #ff6b6b;">₹<%= total %></div>
                 </div>
             </div>
+            <!-- ========== END OPTIONS ========== -->
 
             <!-- Back Link -->
             <a href="/payment" class="back-link">← Back to Payment Options</a>
         </div>
     </div>
 
+    <!-- ======================== SCRIPTS ======================== -->
+    
     <script>
         let timerInterval;
         let paymentEnabled = false;
@@ -317,6 +306,57 @@
         function setUPI(upiId) {
             document.getElementById('customerUpiId').value = upiId;
         }
+    </script>
+
+    <!-- RAZORPAY SCRIPT -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        document.getElementById('razorpay-pay-btn').onclick = async function(e) {
+            e.preventDefault();
+            
+            // 1. Tell server to create an order
+            const response = await fetch('/create-razorpay-order', { method: 'POST' });
+            const order = await response.json();
+
+            // 2. Setup Razorpay Options
+            const options = {
+                key: 'rzp_live_TNdspwXjDdccUR', // YOUR LIVE KEY
+                amount: order.amount,
+                currency: order.currency,
+                name: 'KLH College Canteen',
+                description: 'Canteen Order Payment',
+                order_id: order.order_id,
+                handler: async function (response) {
+                    // 3. Auto verify payment on the backend
+                    const verifyRes = await fetch('/verify-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        })
+                    });                    
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.success) {
+                        // 4. Instant Redirect to Home Page
+                        window.location.href = verifyData.redirectUrl;
+                    } else {
+                        alert("Payment Failed or Not Verified.");
+                    }
+                },
+                prefill: {
+                    name: '<%= typeof user !== "undefined" && user ? user.full_name : "Guest" %>',
+                    email: '<%= typeof user !== "undefined" && user ? user.email : "" %>',
+                    contact: '9999999999'
+                },
+                theme: {
+                    color: '#ff6b6b'
+                }
+            };
+            const rzp1 = new Razorpay(options);
+            rzp1.open();
+        };
     </script>
 </body>
 </html>
