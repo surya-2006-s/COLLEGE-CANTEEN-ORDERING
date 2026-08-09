@@ -49,10 +49,8 @@ const supabase = createClient(
 console.log('🔗 Supabase connected');
 
 // ==================== RAZORPAY SETUP ====================
-// REPLACE THESE 2 LINES WITH YOUR REAL KEYS FROM RAZORPAY DASHBOARD
 const razorpay = new Razorpay({
     key_id: 'rzp_live_TNdspwXjDdccUR',
-
     key_secret: 'BP3zCo3J4Qx0i1tvCOX9ki3u',
 });
 
@@ -66,7 +64,6 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS || 'klbi vkdj huty fuwn'
     }
 });
-
 
 transporter.verify((error, success) => {
     if (error) {
@@ -223,8 +220,6 @@ app.get('/upi-payment', (req, res) => {
     res.render('upi-payment', { upiId: 'suryasreemanth01@okicici', total: total, classroom: req.session.classroom || 'Not specified' });
 });
 
-
-
 // ==================== RAZORPAY PAYMENT ROUTES ====================
 
 // 1. Create Razorpay Order
@@ -261,7 +256,7 @@ app.post('/verify-payment', async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
-    const expectedSignature = crypto.createHmac('sha256', 'wD3An2UJpwGLz3wM9TpDDiEl')
+    const expectedSignature = crypto.createHmac('sha256', 'BP3zCo3J4Qx0i1tvCOX9ki3u')
                                      .update(body.toString())
                                      .digest('hex');
 
@@ -551,4 +546,3 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`🔗 Supabase connected`);
 });
-
