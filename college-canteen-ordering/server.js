@@ -256,24 +256,21 @@ app.post('/verify-payment', async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
-    const expectedSignature = crypto.createHmac('sha256', 'BP3zCo3J4Qx0i1tvCOX9ki3u')
+    const expectedSignature = crypto.createHmac('sha256', 'PSsiPx9wdjwsmAZ4eZi1G6Lp')
                                      .update(body.toString())
                                      .digest('hex');
 
-        if (expectedSignature === razorpay_signature) {
+    if (expectedSignature === razorpay_signature) {
         // 1. Mark payment as verified
         req.session.paymentVerified = true;
         
         // 2. Send response to browser to redirect user home immediately
         res.json({ success: true, redirectUrl: '/' });
 
-        // 3. Automatically trigger the order email in the background (No extra clicks needed!)
-        // We create a fake request and response to run your email code internally
+        // 3. Automatically trigger the order email in the background
         setTimeout(async () => {
             try {
                 console.log('📧 Auto-triggering order email...');
-                // Call your /process-payment logic directly here.
-                // We reuse the existing req.session data
                 const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 const classroom = req.session.classroom || 'Not specified';
                 
@@ -294,75 +291,7 @@ app.post('/verify-payment', async (req, res) => {
                     from: 'suryasreemanth01@gmail.com',
                     to: 'suryasreemanth01@gmail.com',
                     subject: '🍽️ New Canteen Order Received!',
-                    // ... (The rest of your email text and HTML goes here) ...
-                    // Since this is getting long, we will just simulate the email send
-                };
-                // Activate your existing transporter
-                const info = await transporter.sendMail(mailOptions);
-                console.log('✅ Order email sent successfully! ID:', info.messageId);
-
-                // Save order to Supabase
-                const orderData = {
-                    classroom: classroom,
-                    items: req.session.cart,
-                    total: total,
-                    status: 'pending',
-                    user_id: req.session.user ? req.session.user.id : null
-                };
-                await supabase.from('orders').insert([orderData]);
-                console.log('✅ Order saved to Supabase!');
-
-                // Clear the session
-                req.session.destroy();
-
-            } catch (error) {
-                console.error('❌ Background email error:', error);
-            }
-        }, 2000); // Wait 2 seconds so the user gets redirected home first
-    } else {
-        res.status(400).json({ success: false, message: 'Payment verification failed' });
-    }
-
-// ==================== PROCESS ORDER WITH EMAIL ====================
-
-app.post('/process-payment', async (req, res) => {
-    console.log('🔍 process-payment called');
-    console.log('📊 paymentVerified:', req.session.paymentVerified);
-    console.log('📦 Cart items:', req.session.cart);
-
-    if (!req.session.paymentVerified) {
-        console.log('❌ Payment not verified - Order BLOCKED!');
-        return res.status(400).send(`
-            <h1>❌ Payment Not Verified!</h1>
-            <p>Please complete the payment first.</p>
-            <a href="/payment">Go back to payment</a>
-        `);
-    }
-
-    console.log('✅ Payment verified - Sending email...');
-
-    try {
-        const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const classroom = req.session.classroom || 'Not specified';
-        
-        let orderItemsText = '';
-        let orderItemsHTML = '';
-        req.session.cart.forEach(item => {
-            orderItemsText += `${item.name} x${item.quantity} = ₹${item.price * item.quantity}\n`;
-            orderItemsHTML += `
-                <tr>
-                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.name}</td>
-                    <td style="padding: 10px; text-align: center; border-bottom: 1px solid #ddd;">${item.quantity}</td>
-                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #ddd;">₹${item.price * item.quantity}</td>
-                </tr>
-            `;
-        });
-
-        const mailOptions = {
-            from: 'suryasreemanth01@gmail.com',
-            to: 'suryasreemanth01@gmail.com',
-            subject: '🍽️ New Canteen Order Received!',
-            text: `
+                    text: `
 =====================================
       NEW CANTEEN ORDER
 =====================================
@@ -382,75 +311,88 @@ ${orderItemsText}
 =====================================
     Thank you!
 =====================================
-            `,
-            html: `
-            <div style="font-family: Arial; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                <div style="background: #667eea; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
-                    <h2 style="color: white; margin: 0;">🍽️ New Canteen Order!</h2>
-                </div>
-                <div style="padding: 20px;">
-                    <p><strong>📅 Date:</strong> ${new Date().toLocaleString()}</p>
-                    <p><strong>🏫 Classroom:</strong> ${classroom}</p>
-                    <p><strong>📸 ID Photo:</strong> ${req.session.idPhoto || 'Not uploaded'}</p>
-                    <p><strong>✅ Payment:</strong> <span style="color: green;">VERIFIED</span></p>
-                    
-                    <h3>📋 Order Details:</h3>
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #667eea; color: white;">
-                                <th style="padding: 10px; text-align: left;">Item</th>
-                                <th style="padding: 10px; text-align: center;">Qty</th>
-                                <th style="padding: 10px; text-align: right;">Price</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${orderItemsHTML}
-                        </tbody>
-                        <tfoot>
-                            <tr style="font-weight: bold; background: #f0f0f0;">
-                                <td colspan="2" style="padding: 10px; text-align: right;">Total:</td>
-                                <td style="padding: 10px; text-align: right; color: #667eea;">₹${total}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                    
-                    <div style="text-align: center; margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px;">
-                        <p style="color: #2e7d32; margin: 0;">✅ Order Confirmed!</p>
+                    `,
+                    html: `
+                    <div style="font-family: Arial; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                        <div style="background: #667eea; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+                            <h2 style="color: white; margin: 0;">🍽️ New Canteen Order!</h2>
+                        </div>
+                        <div style="padding: 20px;">
+                            <p><strong>📅 Date:</strong> ${new Date().toLocaleString()}</p>
+                            <p><strong>🏫 Classroom:</strong> ${classroom}</p>
+                            <p><strong>📸 ID Photo:</strong> ${req.session.idPhoto || 'Not uploaded'}</p>
+                            <p><strong>✅ Payment:</strong> <span style="color: green;">VERIFIED</span></p>
+                            
+                            <h3>📋 Order Details:</h3>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #667eea; color: white;">
+                                        <th style="padding: 10px; text-align: left;">Item</th>
+                                        <th style="padding: 10px; text-align: center;">Qty</th>
+                                        <th style="padding: 10px; text-align: right;">Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${orderItemsHTML}
+                                </tbody>
+                                <tfoot>
+                                    <tr style="font-weight: bold; background: #f0f0f0;">
+                                        <td colspan="2" style="padding: 10px; text-align: right;">Total:</td>
+                                        <td style="padding: 10px; text-align: right; color: #667eea;">₹${total}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            
+                            <div style="text-align: center; margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px;">
+                                <p style="color: #2e7d32; margin: 0;">✅ Order Confirmed!</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            `
-        };
+                    `
+                };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Order email sent successfully!');
-        console.log('📧 Email ID:', info.messageId);
+                const info = await transporter.sendMail(mailOptions);
+                console.log('✅ Order email sent successfully! ID:', info.messageId);
 
-        const orderData = {
-            classroom: classroom,
-            items: req.session.cart,
-            total: total,
-            status: 'pending',
-            user_id: req.session.user ? req.session.user.id : null
-        };
+                const orderData = {
+                    classroom: classroom,
+                    items: req.session.cart,
+                    total: total,
+                    status: 'pending',
+                    user_id: req.session.user ? req.session.user.id : null
+                };
+                await supabase.from('orders').insert([orderData]);
+                console.log('✅ Order saved to Supabase!');
 
-        const { data, error } = await supabase
-            .from('orders')
-            .insert([orderData]);
+                req.session.destroy();
 
-        if (error) {
-            console.error('❌ Supabase save error:', error);
-            throw new Error('Failed to save order');
-        }
-        
-        console.log('✅ Order saved to Supabase!');
-
-        req.session.destroy();
-        res.redirect('/');
-    } catch (error) {
-        console.error('❌ Error processing order:', error);
-        res.status(500).send('Error: ' + error.message);
+            } catch (error) {
+                console.error('❌ Background email error:', error);
+            }
+        }, 2000); 
+    } else {
+        res.status(400).json({ success: false, message: 'Payment verification failed' });
     }
+});
+
+// ==================== PROCESS ORDER WITH EMAIL (LEGACY) ====================
+// Note: The email is now handled automatically in verify-payment above.
+// We keep this route just in case someone manually hits the old flow.
+
+app.post('/process-payment', async (req, res) => {
+    console.log('🔍 process-payment called');
+    
+    // If payment was already verified by the auto-flow, redirect home
+    if (req.session.paymentVerified) {
+        req.session.destroy();
+        return res.redirect('/');
+    }
+
+    return res.status(400).send(`
+        <h1>❌ Manual process not needed!</h1>
+        <p>Your payment was already processed automatically.</p>
+        <a href="/">Go to Home</a>
+    `);
 });
 
 // ==================== SIGNUP ====================
