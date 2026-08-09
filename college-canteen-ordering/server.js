@@ -223,16 +223,7 @@ app.get('/upi-payment', (req, res) => {
     res.render('upi-payment', { upiId: 'suryasreemanth01@okicici', total: total, classroom: req.session.classroom || 'Not specified' });
 });
 
-app.get('/qr-payment', (req, res) => {
-    if (!req.session.idPhoto) return res.redirect('/camera');
-    req.session.paymentVerified = false;
-    const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    res.render('qr-payment', { 
-        upiId: 'qrscan@pay', 
-        total: total, 
-        classroom: req.session.classroom || 'Not specified' 
-    });
-});
+
 
 // ==================== RAZORPAY PAYMENT ROUTES ====================
 
