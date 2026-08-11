@@ -310,53 +310,49 @@
 
     <!-- RAZORPAY SCRIPT -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <script>
-        document.getElementById('razorpay-pay-btn').onclick = async function(e) {
-            e.preventDefault();
-            
-            // 1. Tell server to create an order
-            const response = await fetch('/create-razorpay-order', { method: 'POST' });
-            const order = await response.json();
 
-            // 2. Setup Razorpay Options
-            const options = {
-                key: 'rzp_live_Tf7E3A47cA01347BA20D337FE1E1E1C9087998D70EFFB5F45D6BF50BAG1783C8DA80D0C65', // YOUR NEW LIVE KEY ID
-                amount: order.amount,
-                currency: order.currency,
-                name: 'KLH College Canteen',
-                description: 'Canteen Order Payment',
-                order_id: order.order_id,
-                handler: async function (response) {
-                    // 3. Auto verify payment on the backend
-                    const verifyRes = await fetch('/verify-payment', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature
-                        })
-                    });                    
-                    const verifyData = await verifyRes.json();
-                    if (verifyData.success) {
-                        // 4. Instant Redirect to Home Page
-                        window.location.href = verifyData.redirectUrl;
-                    } else {
-                        alert("Payment Failed or Not Verified.");
-                    }
-                },
-                prefill: {
-                    name: '<%= typeof user !== "undefined" && user ? user.full_name : "Guest" %>',
-                    email: '<%= typeof user !== "undefined" && user ? user.email : "" %>',
-                    contact: '9999999999'
-                },
-                theme: {
-                    color: '#ff6b6b'
+<script>
+    document.getElementById('razorpay-pay-btn').onclick = async function(e) {
+        e.preventDefault();
+        const response = await fetch('/create-razorpay-order', { method: 'POST' });
+        const order = await response.json();
+
+        const options = {
+            key: 'rzp_live_TNkcne7Ee8lREV',
+            amount: order.amount,
+            currency: order.currency,
+            name: 'KLH College Canteen',
+            description: 'Canteen Order Payment',
+            order_id: order.order_id,
+            handler: async function (response) {
+                const verifyRes = await fetch('/verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                });                    
+                const verifyData = await verifyRes.json();
+                if (verifyData.success) {
+                    window.location.href = verifyData.redirectUrl;
+                } else {
+                    alert("Payment Failed or Not Verified.");
                 }
-            };
-            const rzp1 = new Razorpay(options);
-            rzp1.open();
+            },
+            prefill: {
+                name: '<%= typeof user !== "undefined" && user ? user.full_name : "Guest" %>',
+                email: '<%= typeof user !== "undefined" && user ? user.email : "" %>',
+                contact: '9999999999'
+            },
+            theme: {
+                color: '#ff6b6b'
+            }
         };
-    </script>
+        const rzp1 = new Razorpay(options);
+        rzp1.open();
+    };
+</script>
 </body>
 </html>
