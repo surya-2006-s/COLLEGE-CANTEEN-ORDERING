@@ -174,7 +174,7 @@ app.post('/update-cart', (req, res) => {
 app.get('/classroom', (req, res) => {
     if (!req.session.cart || req.session.cart.length === 0) return res.redirect('/');
     const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    if (total < 100) return res.redirect('/cart?error=minOrder');
+    if (total < 10) return res.redirect('/cart?error=minOrder');
     
     const floors = ['-1', '0', '1', '2', '3', '4'];
     const rooms = [];
