@@ -78,11 +78,12 @@ transporter.verify((error, success) => {
 // ==================== ROUTES ====================
 
 // 1. HOME PAGE
+// 1. HOME PAGE
 app.get('/', async (req, res) => {
-    req.session.cart = req.session.cart || [];
-    let categories = [];
-
     try {
+        req.session.cart = req.session.cart || [];
+        let categories = [];
+
         const { data, error } = await supabase
             .from('menu')
             .select('category')
@@ -92,16 +93,22 @@ app.get('/', async (req, res) => {
             const uniqueCategories = [...new Set(data.map(item => item.category))];
             categories = uniqueCategories.map(cat => ({ name: cat, slug: cat }));
         }
-    } catch (error) {
-        console.log("⚠️ Menu fetch failed:", error);
-    }
 
-    res.render("index", {
-        categories: categories,
-        cart: req.session.cart,
-        user: req.session.user || null,
-        requireLogin: !req.session.user
-    });
+        res.render("index", {
+            categories: categories,
+            cart: req.session.cart,
+            user: req.session.user || null,
+            requireLogin: !req.session.user
+        });
+    } catch (error) {
+        console.log("❌ Home page error:", error);
+        // Fallback: Show a simple message if render fails
+        res.send(`
+            <h1>⚠️ Something went wrong</h1>
+            <p>Error: ${error.message}</p>
+            <p><a href="/test">Test Route</a></p>
+        `);
+    }
 });
 
 // 2. MENU PAGE
@@ -541,7 +548,7 @@ app.get('/admin/logout', (req, res) => {
 
 // ==================== TEST ROUTE ====================
 app.get('/test', (req, res) => {
-    res.send('✅ Server is running!');
+    res.send('✅ Server is running! This is a test page.');
 });
 
 // ==================== START SERVER ====================
