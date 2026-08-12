@@ -49,9 +49,10 @@ const supabase = createClient(
 console.log('🔗 Supabase connected');
 
 // ==================== RAZORPAY SETUP ====================
+// ==================== RAZORPAY SETUP ====================
 const razorpay = new Razorpay({
-    key_id: 'rzp_live_TNkcne7Ee8lREV',
-    key_secret: 'PSsiPx9wdjwsmAZ4eZi1G6Lp',
+    key_id: 'rzp_live_TOlZHH3nJ86Qpf',
+    key_secret: '8wd3e1siQGo3QefK4ypI0b3D',
 });
 
 // ==================== EMAIL SETUP ====================
@@ -261,7 +262,7 @@ app.post('/verify-payment', async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
-    const expectedSignature = crypto.createHmac('sha256', 'PSsiPx9wdjwsmAZ4eZi1G6Lp')
+    const expectedSignature = crypto.createHmac('sha256', '8wd3e1siQGo3QefK4ypI0b3D')
                                      .update(body.toString())
                                      .digest('hex');
 
