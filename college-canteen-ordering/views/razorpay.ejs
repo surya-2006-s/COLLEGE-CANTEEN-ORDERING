@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Payment</title>
+    <title>Razorpay Payment</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
         body {
@@ -11,6 +11,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin: 0;
         }
         .container {
             background: white;
@@ -18,14 +19,16 @@
             border-radius: 20px;
             text-align: center;
             max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
         .amount {
             font-size: 48px;
             color: #667eea;
             margin: 20px 0;
+            font-weight: bold;
         }
         .razorpay-btn {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 15px 40px;
             border: none;
@@ -33,74 +36,82 @@
             font-size: 18px;
             cursor: pointer;
             width: 100%;
+            margin-top: 10px;
+            transition: transform 0.3s;
+        }
+        .razorpay-btn:hover {
+            transform: scale(1.02);
+        }
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Pay with Razorpay</h1>
-            <% if (!razorpayConfigured) { %>
-                <div style="color: #a94442; background: #f2dede; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-                    Razorpay is not configured yet. Set <strong>RAZORPAY_KEY_ID</strong> and <strong>RAZORPAY_KEY_SECRET</strong> in your environment to enable payment.
-                </div>
-            <% } %>
-            <div class="amount">₹<%= total %></div>
-            <button class="razorpay-btn" id="pay-btn" <%= !razorpayConfigured ? 'disabled' : '' %>>Pay Now</button>
-            <div style="margin-top: 12px; text-align:center;"><a href="/payment" style="color:#667eea; text-decoration:none;">← Back to Payment Options</a></div>
+        <h1 style="color: #333;">💳 Razorpay Payment</h1>
+        <div class="amount">₹<%= total %></div>
+        <button class="razorpay-btn" id="razorpay-pay-btn">Pay Now</button>
+        <a href="/payment" class="back-link">← Back to Payment Options</a>
+    </div>
+
     <script>
-        document.getElementById('pay-btn').onclick = function() {
-            if (!<%= razorpayConfigured ? 'true' : 'false' %>) {
-                alert('Razorpay keys are not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.');
-                return;
-            }
-            fetch('/create-order', { method: 'POST' })
-                .then(res => res.json())
-                .then(order => {
-                    if (order.error) {
-                        alert('Unable to create Razorpay order: ' + order.error);
-                        return;
-                    }
-                    const options = {
-                        key: '<%= razorpayKeyId %>',
-                        amount: order.amount,
-                        currency: 'INR',
-                        name: 'College Canteen',
-                        description: 'Food Order',
-                        order_id: order.id,
-                        handler: function(response) {
-                            fetch('/verify-payment', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(response)
+        document.getElementById('razorpay-pay-btn').onclick = async function(e) {
+            e.preventDefault();
+            
+            try {
+                const response = await fetch('/create-razorpay-order', { method: 'POST' });
+                const order = await response.json();
+                
+                if (order.error) {
+                    alert('Error: ' + order.error);
+                    return;
+                }
+
+                const options = {
+                    key: 'rzp_live_TNkcne7Ee8lREV',
+                    amount: order.amount,
+                    currency: order.currency,
+                    name: 'KLH College Canteen',
+                    description: 'Canteen Order Payment',
+                    order_id: order.order_id,
+                    handler: async function (response) {
+                        const verifyRes = await fetch('/verify-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature
                             })
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data.success) {
-                                    return fetch('/process-payment', { method: 'POST' });
-                                }
-                                throw new Error(data.error || 'Verification failed');
-                            })
-                            .then(res => {
-                                if (res.ok) {
-                                    alert('Payment successful! Order placed.');
-                                    window.location.href = '/';
-                                } else {
-                                    return res.text().then(text => { throw new Error(text); });
-                                }
-                            })
-                            .catch(error => {
-                                alert('Payment failed: ' + error.message);
-                            });
+                        });                    
+                        const verifyData = await verifyRes.json();
+                        if (verifyData.success) {
+                            window.location.href = '/process-payment';
+                        } else {
+                            alert("Payment Failed or Not Verified.");
                         }
-                    };
-                    const rzp = new Razorpay(options);
-                    rzp.open();
-                })
-                .catch(err => {
-                    alert('Unable to start payment: ' + err.message);
-                });
+                    },
+                    prefill: {
+                        name: '<%= typeof user !== "undefined" && user ? user.full_name : "Guest" %>',
+                        email: '<%= typeof user !== "undefined" && user ? user.email : "" %>',
+                        contact: '9999999999'
+                    },
+                    theme: {
+                        color: '#667eea'
+                    }
+                };
+                
+                const rzp = new Razorpay(options);
+                rzp.open();
+                
+            } catch (error) {
+                alert('Payment failed: ' + error.message);
+            }
         };
     </script>
 </body>
 </html>
-
