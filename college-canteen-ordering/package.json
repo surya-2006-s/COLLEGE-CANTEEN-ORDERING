@@ -5,7 +5,7 @@
   "description": "A college canteen ordering system using Express and PocketBase",
   "main": "server.js",
   "scripts": {
-    "start": "cd college-canteen-ordering && npm install && node server.js",
+    "start": "node server.js",
     "dev": "nodemon --es-module-specifier-resolution=node server.js"
   },
   "dependencies": {
