@@ -66,6 +66,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+
 transporter.verify((error, success) => {
     if (error) {
         console.log('❌ Email Error:', error);
@@ -546,6 +547,5 @@ app.get('/test', (req, res) => {
 // ==================== START SERVER ====================
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`🔗 Supabase connected`);
 });
 
