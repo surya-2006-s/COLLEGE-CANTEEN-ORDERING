@@ -49,7 +49,6 @@ const supabase = createClient(
 console.log('🔗 Supabase connected');
 
 // ==================== RAZORPAY SETUP ====================
-// UPDATED WITH YOUR EXACT LIVE KEYS
 const razorpay = new Razorpay({
     key_id: 'rzp_live_TNkcne7Ee8lREV',
     key_secret: 'PSsiPx9wdjwsmAZ4eZi1G6Lp',
@@ -66,7 +65,6 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-
 transporter.verify((error, success) => {
     if (error) {
         console.log('❌ Email Error:', error);
@@ -77,7 +75,6 @@ transporter.verify((error, success) => {
 
 // ==================== ROUTES ====================
 
-// 1. HOME PAGE
 // 1. HOME PAGE
 app.get('/', async (req, res) => {
     try {
@@ -102,7 +99,6 @@ app.get('/', async (req, res) => {
         });
     } catch (error) {
         console.log("❌ Home page error:", error);
-        // Fallback: Show a simple message if render fails
         res.send(`
             <h1>⚠️ Something went wrong</h1>
             <p>Error: ${error.message}</p>
@@ -183,7 +179,7 @@ app.post('/update-cart', (req, res) => {
 app.get('/classroom', (req, res) => {
     if (!req.session.cart || req.session.cart.length === 0) return res.redirect('/');
     const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    if (total < 100) return res.redirect('/cart?error=minOrder');
+    if (total < 10) return res.redirect('/cart?error=minOrder');
     
     const floors = ['-1', '0', '1', '2', '3', '4'];
     const rooms = [];
@@ -265,7 +261,6 @@ app.post('/verify-payment', async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
-    // UPDATED TO MATCH THE KEY_SECRET ABOVE EXACTLY
     const expectedSignature = crypto.createHmac('sha256', 'PSsiPx9wdjwsmAZ4eZi1G6Lp')
                                      .update(body.toString())
                                      .digest('hex');
@@ -555,4 +550,3 @@ app.get('/test', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
-
