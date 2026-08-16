@@ -42,14 +42,10 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // ==================== SUPABASE SETUP ====================
-// ==================== SUPABASE SETUP ====================
-// ==================== SUPABASE SETUP ====================
 const supabase = createClient(
     process.env.SUPABASE_URL, 
     process.env.SUPABASE_KEY
 );
-
-
 
 console.log('🔗 Supabase connected');
 
@@ -473,12 +469,15 @@ ${orderItemsText}
 });
 
 // ==================== SIGNUP ====================
+app.get('/signup', (req, res) => { 
+    res.render('signup', { error: null }); 
+});
 
 app.post('/signup', async (req, res) => {
     const { full_name, email, password } = req.body;
     
     try {
-        // Use Supabase Auth to sign up
+        // Use Supabase Auth to sign up (this handles password hashing securely)
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -488,25 +487,23 @@ app.post('/signup', async (req, res) => {
         });
 
         if (error) {
-            console.error('❌ Signup error:', error);
+            console.error('Signup error:', error);
             return res.render('signup', { error: error.message });
         }
 
-        console.log('✅ Signup successful for:', email);
         res.redirect('/login');
         
     } catch (error) {
-        console.error('❌ Signup catch error:', error);
-        // This will show you the real error on the screen instead of just "fetch failed"
-        res.render('signup', { error: 'Server error: ' + error.message });
+        console.error('Signup error:', error);
+        res.render('signup', { error: 'Error creating account. Please try again.' });
     }
 });
 
-
-
 // ==================== LOGIN ====================
+app.get('/login', (req, res) => { 
+    res.render('login', { error: null }); 
+});
 
-// ==================== LOGIN ====================
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -545,37 +542,6 @@ app.post('/login', async (req, res) => {
         return res.render("login", { error: "Invalid email or password." });
     }
 });
-// ==================== SIGNUP ====================
-app.get('/signup', (req, res) => { 
-    res.render('signup', { error: null }); 
-});
-
-app.post('/signup', async (req, res) => {
-    const { full_name, email, password } = req.body;
-    
-    try {
-        // Use Supabase Auth to sign up (this handles password hashing securely)
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: { full_name: full_name }
-            }
-        });
-
-        if (error) {
-            console.error('Signup error:', error);
-            return res.render('signup', { error: error.message });
-        }
-
-        res.redirect('/login');
-        
-    } catch (error) {
-        console.error('Signup error:', error);
-        res.render('signup', { error: 'Error creating account. Please try again.' });
-    }
-});
-
 
 // ==================== ADMIN ROUTES ====================
 
