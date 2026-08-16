@@ -43,10 +43,12 @@ const upload = multer({ storage: storage });
 
 // ==================== SUPABASE SETUP ====================
 // ==================== SUPABASE SETUP ====================
+// ==================== SUPABASE SETUP ====================
 const supabase = createClient(
-    process.env.SUPABASE_URL || 'https://hsweqjtfvqjvgaapvuvm.supabase.co', 
-    process.env.SUPABASE_KEY || 'sb_publishable_pjkaDrk_01WAqOZvYrdr7g_WY50OZUM'
+    process.env.SUPABASE_URL, 
+    process.env.SUPABASE_KEY
 );
+
 
 
 console.log('🔗 Supabase connected');
@@ -476,38 +478,35 @@ app.post('/signup', async (req, res) => {
     const { full_name, email, password } = req.body;
     
     try {
-        // Use Supabase Auth to sign up (this handles password hashing securely)
+        // Use Supabase Auth to sign up
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: { full_name: full_name } // Pass the full name into user metadata
+                data: { full_name: full_name }
             }
         });
 
         if (error) {
-            console.error('Signup error:', error);
+            console.error('❌ Signup error:', error);
             return res.render('signup', { error: error.message });
         }
 
-        // If you need the user in your custom 'users' table, create it AFTER auth works
-        // But for now, just redirect to login
+        console.log('✅ Signup successful for:', email);
         res.redirect('/login');
         
     } catch (error) {
-        console.error('Signup error:', error);
-        res.render('signup', { error: 'Error creating account. Please try again.' });
+        console.error('❌ Signup catch error:', error);
+        // This will show you the real error on the screen instead of just "fetch failed"
+        res.render('signup', { error: 'Server error: ' + error.message });
     }
 });
 
 
+
 // ==================== LOGIN ====================
 
 // ==================== LOGIN ====================
-app.get('/login', (req, res) => { 
-    res.render('login', { error: null }); 
-});
-
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -518,9 +517,14 @@ app.post('/login', async (req, res) => {
             password,
         });
 
-        if (error || !data.user) {
-            console.log("Login error:", error);
+        if (error) {
+            console.log("❌ Supabase Login Error:", error);
             return res.render("login", { error: "Invalid email or password." });
+        }
+
+        if (!data.user) {
+            console.log("❌ No user returned from Supabase");
+            return res.render("login", { error: "User not found." });
         }
 
         // Get the user's info
