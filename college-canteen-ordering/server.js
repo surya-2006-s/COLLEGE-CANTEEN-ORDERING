@@ -503,6 +503,7 @@ app.post('/signup', async (req, res) => {
 
 // ==================== LOGIN ====================
 
+// ==================== LOGIN ====================
 app.get('/login', (req, res) => { 
     res.render('login', { error: null }); 
 });
@@ -511,7 +512,7 @@ app.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // Use Supabase Auth to sign in
+        // Use Supabase Auth to securely sign in
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -522,7 +523,7 @@ app.post('/login', async (req, res) => {
             return res.render("login", { error: "Invalid email or password." });
         }
 
-        // Fetch the user's full_name from metadata so you can use it in the header
+        // Get the user's info
         const full_name = data.user.user_metadata?.full_name || email;
 
         // Store the user in your session
@@ -540,6 +541,38 @@ app.post('/login', async (req, res) => {
         return res.render("login", { error: "Invalid email or password." });
     }
 });
+// ==================== SIGNUP ====================
+app.get('/signup', (req, res) => { 
+    res.render('signup', { error: null }); 
+});
+
+app.post('/signup', async (req, res) => {
+    const { full_name, email, password } = req.body;
+    
+    try {
+        // Use Supabase Auth to sign up (this handles password hashing securely)
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { full_name: full_name }
+            }
+        });
+
+        if (error) {
+            console.error('Signup error:', error);
+            return res.render('signup', { error: error.message });
+        }
+
+        res.redirect('/login');
+        
+    } catch (error) {
+        console.error('Signup error:', error);
+        res.render('signup', { error: 'Error creating account. Please try again.' });
+    }
+});
+
+
 // ==================== ADMIN ROUTES ====================
 
 app.get('/admin-login', (req, res) => { 
