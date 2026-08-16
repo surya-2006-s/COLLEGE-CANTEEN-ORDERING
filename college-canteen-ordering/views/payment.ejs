@@ -195,6 +195,14 @@
         const payButton = document.getElementById('razorpay-pay-btn');
         const errorMsg = document.getElementById('errorMsg');
         const successMsg = document.getElementById('successMsg');
+        const razorpayKey = '<%= RAZORPAY_KEY_ID %>';
+
+        // If the server does not have a Razorpay key configured, disable payment
+        if (!razorpayKey) {
+            errorMsg.textContent = 'Razorpay is not configured on the server. Please contact the site administrator.';
+            errorMsg.style.display = 'block';
+            payButton.disabled = true;
+        }
 
         // Pay button click
         payButton.addEventListener('click', async function (e) {

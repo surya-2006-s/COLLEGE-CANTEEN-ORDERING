@@ -59,6 +59,10 @@ const razorpay = new Razorpay({
 
 console.log("✅ Razorpay configured with Key ID:", process.env.RAZORPAY_KEY_ID);
 
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    console.warn('❌ Razorpay keys are missing from environment. Orders will fail until RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are set on the server.');
+}
+
 // ==================== EMAIL SETUP ====================
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -246,6 +250,11 @@ app.get('/upi-payment', (req, res) => {
 // 1. Create Razorpay Order
 app.post('/create-razorpay-order', async (req, res) => {
     console.log('📝 Creating Razorpay order...');
+    // Fail fast if keys are not configured (helps on hosted platforms)
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+        console.error('❌ Cannot create Razorpay order: missing API keys');
+        return res.status(500).json({ error: 'Razorpay is not configured on the server. Please contact the site administrator.' });
+    }
     
     if (!req.session.cart || req.session.cart.length === 0) {
         console.log('❌ Cart is empty');
@@ -293,6 +302,11 @@ app.post('/verify-payment', async (req, res) => {
     console.log('🔑 Signature:', razorpay_signature);
 
     try {
+        if (!process.env.RAZORPAY_KEY_SECRET) {
+            console.error('❌ Cannot verify payment: missing RAZORPAY_KEY_SECRET');
+            return res.status(500).json({ success: false, message: 'Server misconfiguration: razorpay secret missing' });
+        }
+
         const body = razorpay_order_id + '|' + razorpay_payment_id;
         const expectedSignature = crypto
             .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
