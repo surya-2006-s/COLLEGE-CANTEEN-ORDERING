@@ -2,116 +2,116 @@
 <html>
 <head>
     <title>Razorpay Payment</title>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <style>
-        body {
-            font-family: Arial;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        .amount {
-            font-size: 48px;
-            color: #667eea;
-            margin: 20px 0;
-            font-weight: bold;
-        }
-        .razorpay-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 40px;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
-            transition: transform 0.3s;
-        }
-        .razorpay-btn:hover {
-            transform: scale(1.02);
-        }
-        .back-link {
-            display: block;
-            margin-top: 20px;
-            color: #667eea;
-            text-decoration: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1 style="color: #333;">💳 Razorpay Payment</h1>
-        <div class="amount">₹<%= total %></div>
-        <button class="razorpay-btn" id="razorpay-pay-btn">Pay Now</button>
-        <a href="/payment" class="back-link">← Back to Payment Options</a>
-    </div>
-
     <script>
-        document.getElementById('razorpay-pay-btn').onclick = async function(e) {
-            e.preventDefault();
-            
-            try {
-                const response = await fetch('/create-razorpay-order', { method: 'POST' });
-                const order = await response.json();
-                
-                if (order.error) {
-                    alert('Error: ' + order.error);
-                    return;
-                }
+    document.getElementById('razorpay-pay-btn').onclick = async function(e) {
+        e.preventDefault();
 
-                const options = {
-                    key: 'rzp_live_TNkcne7Ee8lREV',
-                    amount: order.amount,
-                    currency: order.currency,
-                    name: 'KLH College Canteen',
-                    description: 'Canteen Order Payment',
-                    order_id: order.order_id,
-                    handler: async function (response) {
-                        const verifyRes = await fetch('/verify-payment', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature
-                            })
-                        });                    
-                        const verifyData = await verifyRes.json();
-                        if (verifyData.success) {
-                            window.location.href = '/process-payment';
-                        } else {
-                            alert("Payment Failed or Not Verified.");
-                        }
-                    },
-                    prefill: {
-                        name: '<%= typeof user !== "undefined" && user ? user.full_name : "Guest" %>',
-                        email: '<%= typeof user !== "undefined" && user ? user.email : "" %>',
-                        contact: '9999999999'
-                    },
-                    theme: {
-                        color: '#667eea'
-                    }
-                };
-                
-                const rzp = new Razorpay(options);
-                rzp.open();
-                
-            } catch (error) {
-                alert('Payment failed: ' + error.message);
+        try {
+            // 1. Create Razorpay order on the server
+            const response = await fetch('/create-razorpay-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const order = await response.json();
+
+            if (!response.ok || order.error) {
+                alert('Unable to create payment order: ' + (order.error || 'Unknown error'));
+                console.error('Order creation error:', order);
+                return;
             }
-        };
-    </script>
+
+            console.log('✅ Razorpay order created:', order.order_id);
+
+            // 2. Open Razorpay Checkout
+            const options = {
+                key: 'rzp_live_TOlZHH3nJ86Qpf',
+                amount: order.amount,
+                currency: order.currency,
+                name: 'KLH College Canteen',
+                description: 'Canteen Order Payment',
+                order_id: order.order_id,
+
+                handler: async function(paymentResponse) {
+
+                    console.log('✅ Payment completed');
+                    console.log('Payment ID:', paymentResponse.razorpay_payment_id);
+                    console.log('Order ID:', paymentResponse.razorpay_order_id);
+
+                    // 3. Verify payment on server
+                    const verifyRes = await fetch('/verify-payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            razorpay_order_id: paymentResponse.razorpay_order_id,
+                            razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                            razorpay_signature: paymentResponse.razorpay_signature
+                        })
+                    });
+
+                    const verifyData = await verifyRes.json();
+
+                    console.log('Verification response:', verifyData);
+
+                    if (verifyData.success) {
+                        // Payment verified
+                        alert('✅ Payment successful!');
+
+                        // Submit POST request to process the order
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '/process-payment';
+
+                        document.body.appendChild(form);
+                        form.submit();
+
+                    } else {
+                        alert(
+                            '❌ Payment verification failed: ' +
+                            (verifyData.message || 'Unknown error')
+                        );
+                    }
+                },
+
+                prefill: {
+                    name: '<%= typeof user !== "undefined" && user ? user.full_name : "Guest" %>',
+                    email: '<%= typeof user !== "undefined" && user ? user.email : "" %>',
+                    contact: '+919999999999'
+                },
+
+                theme: {
+                    color: '#667eea'
+                },
+
+                modal: {
+                    ondismiss: function() {
+                        console.log('Payment popup closed');
+                    }
+                }
+            };
+
+            const rzp = new Razorpay(options);
+
+            rzp.on('payment.failed', function(response) {
+                console.error('❌ Razorpay payment failed:', response.error);
+
+                alert(
+                    '❌ Payment failed: ' +
+                    (response.error.description || 'Please try again.')
+                );
+            });
+
+            rzp.open();
+
+        } catch (error) {
+            console.error('❌ Payment error:', error);
+            alert('Payment failed: ' + error.message);
+        }
+    };
+</script>
 </body>
 </html>
