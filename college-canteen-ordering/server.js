@@ -472,40 +472,34 @@ ${orderItemsText}
 
 // ==================== SIGNUP ====================
 
-app.get('/signup', (req, res) => { 
-    res.render('signup', { error: null }); 
-});
-
 app.post('/signup', async (req, res) => {
     const { full_name, email, password } = req.body;
     
     try {
-        const { data: existing, error: checkError } = await supabase
-            .from('users')
-            .select('email')
-            .eq('email', email)
-            .single();
-        
-        if (existing) {
-            return res.render('signup', { error: "Email already exists!" });
-        }
-        
-        const { data, error } = await supabase
-            .from('users')
-            .insert([{ full_name, email, password }])
-            .select();
-        
+        // Use Supabase Auth to sign up (this handles password hashing securely)
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { full_name: full_name } // Pass the full name into user metadata
+            }
+        });
+
         if (error) {
             console.error('Signup error:', error);
-            return res.render('signup', { error: 'Error creating account' });
+            return res.render('signup', { error: error.message });
         }
-        
+
+        // If you need the user in your custom 'users' table, create it AFTER auth works
+        // But for now, just redirect to login
         res.redirect('/login');
+        
     } catch (error) {
         console.error('Signup error:', error);
         res.render('signup', { error: 'Error creating account. Please try again.' });
     }
 });
+
 
 // ==================== LOGIN ====================
 
@@ -517,20 +511,28 @@ app.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', email)
-            .eq('password', password)
-            .single();
+        // Use Supabase Auth to sign in
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
 
-        if (error || !data) {
+        if (error || !data.user) {
+            console.log("Login error:", error);
             return res.render("login", { error: "Invalid email or password." });
         }
 
-        req.session.user = data;
-        console.log("✅ User logged in:", data.email);
+        // Fetch the user's full_name from metadata so you can use it in the header
+        const full_name = data.user.user_metadata?.full_name || email;
 
+        // Store the user in your session
+        req.session.user = {
+            id: data.user.id,
+            email: data.user.email,
+            full_name: full_name
+        };
+        
+        console.log("✅ User logged in:", data.user.email);
         return res.redirect("/");
 
     } catch (err) {
@@ -538,13 +540,6 @@ app.post('/login', async (req, res) => {
         return res.render("login", { error: "Invalid email or password." });
     }
 });
-
-app.get('/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/login');
-    });
-});
-
 // ==================== ADMIN ROUTES ====================
 
 app.get('/admin-login', (req, res) => { 
