@@ -1,362 +1,376 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPI ID Payment - College Canteen</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <title>Razorpay Payment - KLH Canteen</title>
+    <!-- Razorpay Checkout -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
-        .upi-container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(255,107,107,0.3);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        .upi-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .upi-header h2 {
-            color: #ff6b6b;
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        .upi-input-group {
-            margin-bottom: 20px;
-        }
-        .upi-input-group label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #333;
-            font-size: 16px;
-        }
-        .upi-input-group input {
-            width: 100%;
-            padding: 18px;
-            border: 3px solid #ff6b6b;
-            border-radius: 15px;
-            font-size: 18px;
-            transition: all 0.3s;
-        }
-        .upi-input-group input:focus {
-            outline: none;
-            box-shadow: 0 0 0 5px rgba(255,107,107,0.2);
-        }
-        .pay-button {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-            color: white;
-            width: 100%;
-            padding: 18px;
-            border: none;
-            border-radius: 15px;
-            font-size: 22px;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 20px 0;
-            box-shadow: 0 10px 20px rgba(255,107,107,0.3);
-            transition: all 0.3s;
-        }
-        .pay-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(255,107,107,0.4);
-        }
-        .quick-examples {
-            margin-top: 30px;
-        }
-        .quick-examples h4 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-        .example-chips {
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .example-chip {
-            background: #f0f0f0;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid #ddd;
-        }
-        .example-chip:hover {
-            background: #ff6b6b;
-            color: white;
-            border-color: #ff6b6b;
-        }
-        .merchant-chip {
-            background: #ff6b6b;
-            color: white;
-            font-weight: bold;
-        }
-        .amount-display {
-            text-align: center;
-            font-size: 48px;
-            font-weight: bold;
-            color: #ff6b6b;
-            margin: 20px 0;
-        }
-        .timer-box {
-            background: #e3f2fd;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
             padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
             text-align: center;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
-        .note {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-size: 14px;
-        }
-        
-        /* QR Scanner Option Section */
-        .qr-option-section {
-            margin-top: 40px;
-            padding-top: 30px;
-            border-top: 3px dashed #ff6b6b;
-            text-align: center;
-        }
-        .qr-option-title {
-            font-size: 20px;
+
+        h1 {
             color: #333;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-        .qr-option-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 15px;
-            padding: 25px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-        }
-        .qr-option-card:hover {
-            transform: translateY(-5px);
-            border-color: #ff6b6b;
-            box-shadow: 0 10px 30px rgba(255,107,107,0.2);
-        }
-        .qr-icon {
-            font-size: 50px;
             margin-bottom: 10px;
         }
-        .qr-text {
-            font-size: 22px;
-            font-weight: bold;
-            color: #ff6b6b;
-            margin-bottom: 5px;
-        }
-        .qr-subtext {
+
+        .subtitle {
             color: #666;
             font-size: 14px;
+            margin-bottom: 20px;
         }
+
+        .amount {
+            font-size: 48px;
+            color: #667eea;
+            margin: 25px 0;
+            font-weight: bold;
+        }
+
+        .order-summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .order-summary h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .order-summary .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .order-summary .total {
+            border-top: 2px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .payment-info {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .razorpay-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+
+        .razorpay-btn:hover {
+            transform: scale(1.02);
+        }
+
+        .razorpay-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .back-link {
-            display: block;
-            text-align: center;
+            display: inline-block;
             margin-top: 20px;
-            color: #ff6b6b;
+            color: #667eea;
             text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .error-msg {
+            background: #fee;
+            color: #c0392b;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+            font-size: 14px;
+        }
+
+        .success-msg {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+            font-size: 14px;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <div class="upi-container">
-            <div class="upi-header">
-                <h2>📱 Pay with UPI ID</h2>
-                <p style="color: #666;">Enter your UPI ID to pay ₹<%= total %> directly</p>
-            </div>
+        <h1>💳 Razorpay Payment</h1>
+        <p class="subtitle">KLH College Canteen</p>
 
-            <!-- Amount Display -->
-            <div class="amount-display">
-                ₹<%= total %>
-            </div>
-
-            <!-- Timer Display -->
-            <div class="timer-box" id="timerBox">
-                <div id="timerMessage">⏱️ Click "Pay Now" to start 30-second timer</div>
-                <div id="timerDisplay" style="font-size: 32px; font-weight: bold; margin-top: 10px; color: #ff6b6b;"></div>
-            </div>
-
-            <!-- UPI ID Input -->
-            <div class="upi-input-group">
-                <label>Enter Your UPI ID:</label>
-                <input type="text" id="customerUpiId" placeholder="e.g., 8897273395@paytm or name@okhdfcbank" value="8897273395@paytm">
-                <p style="font-size: 13px; color: #666; margin-top: 8px;">Enter any UPI ID (Google Pay, PhonePe, Paytm, etc.)</p>
-            </div>
-
-            <!-- Pay Button -->
-            <button class="pay-button" onclick="payWithUPI()">
-                💸 Pay ₹<%= total %> Now
-            </button>
-
-            <!-- Quick Fill Examples -->
-            <div class="quick-examples">
-                <h4>📋 Quick Fill Examples:</h4>
-                <div class="example-chips">
-                    <span class="example-chip merchant-chip" onclick="setUPI('<%= upiId %>')">📋 Merchant UPI</span>
-                    <span class="example-chip" onclick="setUPI('8897273395@paytm')">8897273395@paytm</span>
-                    <span class="example-chip" onclick="setUPI('example@okhdfcbank')">example@okhdfcbank</span>
-                    <span class="example-chip" onclick="setUPI('9876543210@ybl')">9876543210@ybl</span>
-                </div>
-            </div>
-
-            <!-- Note -->
-            <div class="note">
-                <strong>📌 Note:</strong> After clicking "Pay Now", your UPI app will open with ₹<%= total %> pre-filled. Just enter your UPI PIN to complete payment.
-            </div>
-
-            <!-- ========== QR SCANNER & RAZORPAY OPTION - UPDATED ========== -->
-            <div class="qr-option-section">
-                <div class="qr-option-title">💰 Prefer to pay via Razorpay?</div>
-                <div class="qr-option-card" id="razorpay-pay-btn">
-                    <div class="qr-icon">💳</div>
-                    <div class="qr-text">Pay via Razorpay</div>
-                    <div class="qr-subtext">Secure online payment using UPI, Card, or Netbanking</div>
-                    <div style="margin-top: 15px; font-size: 20px; font-weight: bold; color: #ff6b6b;">₹<%= total %></div>
-                </div>
-            </div>
-            <!-- ========== END OPTIONS ========== -->
-
-            <!-- Back Link -->
-            <a href="/payment" class="back-link">← Back to Payment Options</a>
+        <div class="amount">
+            ₹<%= total %>
         </div>
+
+        <div class="order-summary">
+            <h3>📋 Order Summary</h3>
+            <% if (typeof cart !== 'undefined' && cart && cart.length > 0) { %>
+                <% cart.forEach(item => { %>
+                    <div class="item">
+                        <span><%= item.name %> x<%= item.quantity %></span>
+                        <span>₹<%= item.price * item.quantity %></span>
+                    </div>
+                <% }); %>
+                <div class="total">
+                    <span>Total</span>
+                    <span>₹<%= total %></span>
+                </div>
+            <% } else { %>
+                <p style="color: #999; font-size: 14px;">No items in cart</p>
+            <% } %>
+        </div>
+
+        <div class="payment-info">
+            🔒 Secure payment powered by Razorpay
+        </div>
+
+        <div id="errorMsg" class="error-msg"></div>
+        <div id="successMsg" class="success-msg"></div>
+
+        <button class="razorpay-btn" id="razorpay-pay-btn" type="button">
+            Pay Now
+        </button>
+
+        <a href="/upi-payment" class="back-link">← Pay with UPI instead</a>
+        <br>
+        <a href="/cart" class="back-link" style="margin-top: 10px;">← Back to Cart</a>
     </div>
 
-    <!-- ======================== SCRIPTS ======================== -->
-    
     <script>
-        let timerInterval;
-        let paymentEnabled = false;
+        // Get Pay Now button
+        const payButton = document.getElementById('razorpay-pay-btn');
+        const errorMsg = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
 
-        function payWithUPI() {
-            const customerUpi = document.getElementById('customerUpiId').value.trim();
-            
-            if (!customerUpi) {
-                alert('Please enter your UPI ID');
-                return;
-            }
-            
-            if (!customerUpi.includes('@')) {
-                alert('Please enter a valid UPI ID (e.g., name@bank or mobile@bank)');
-                return;
-            }
-            
-            // Create UPI deep link
-            const upiLink = `upi://pay?pa=${encodeURIComponent(customerUpi)}&pn=Customer&am=<%= total %>&cu=INR&mode=pay&tn=College%20Canteen%20Order`;
-            
-            // Try to open UPI app
-            window.location.href = upiLink;
-            
-            // Start timer
-            startPaymentTimer();
-            
-            // Show message
-            alert(`✅ UPI app opening with ₹<%= total %>. Complete payment and return here.`);
-        }
-
-        function startPaymentTimer() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
-
-            let seconds = 30;
-            const timerDisplay = document.getElementById('timerDisplay');
-            const timerMessage = document.getElementById('timerMessage');
-            
-            timerMessage.innerHTML = '⏱️ Please complete payment in your UPI app...';
-            
-            timerInterval = setInterval(() => {
-                timerDisplay.innerHTML = `⏳ ${seconds}s`;
-                
-                if (seconds <= 0) {
-                    clearInterval(timerInterval);
-                    timerDisplay.innerHTML = '✅ Done!';
-                    timerMessage.innerHTML = '✅ Payment window ready - click "I\'ve Completed Payment" below';
-                    
-                    // Show completion button
-                    showCompletionButton();
-                }
-                seconds--;
-            }, 1000);
-        }
-
-        function showCompletionButton() {
-            const container = document.querySelector('.upi-container');
-            const existingBtn = document.getElementById('completePaymentBtn');
-            
-            if (!existingBtn) {
-                const btnHtml = `
-                    <form id="completePaymentForm" action="/process-payment" method="POST" style="margin-top: 20px;">
-                        <button type="submit" class="pay-button" style="background: #28a745;">
-                            ✅ I've Completed Payment
-                        </button>
-                    </form>
-                `;
-                container.insertAdjacentHTML('beforeend', btnHtml);
-            }
-        }
-
-        function setUPI(upiId) {
-            document.getElementById('customerUpiId').value = upiId;
-        }
-    </script>
-
-    <!-- RAZORPAY SCRIPT -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <script>
-        document.getElementById('razorpay-pay-btn').onclick = async function(e) {
+        // Pay button click
+        payButton.addEventListener('click', async function (e) {
             e.preventDefault();
-            
-            // 1. Tell server to create an order
-            const response = await fetch('/create-razorpay-order', { method: 'POST' });
-            const order = await response.json();
 
-            // 2. Setup Razorpay Options
-            const options = {
-                key: 'rzp_live_TNdspwXjDdccUR', // YOUR LIVE KEY
-                amount: order.amount,
-                currency: order.currency,
-                name: 'KLH College Canteen',
-                description: 'Canteen Order Payment',
-                order_id: order.order_id,
-                handler: async function (response) {
-                    // 3. Auto verify payment on the backend
-                    const verifyRes = await fetch('/verify-payment', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature
-                        })
-                    });                    
-                    const verifyData = await verifyRes.json();
-                    if (verifyData.success) {
-                        // 4. Instant Redirect to Home Page
-                        window.location.href = verifyData.redirectUrl;
-                    } else {
-                        alert("Payment Failed or Not Verified.");
+            // Prevent multiple clicks
+            payButton.disabled = true;
+            payButton.textContent = 'Processing...';
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            try {
+                // =====================================================
+                // STEP 1: CREATE RAZORPAY ORDER
+                // =====================================================
+                console.log('Creating Razorpay order...');
+
+                const response = await fetch('/create-razorpay-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
                     }
-                },
-                prefill: {
-                    name: '<%= typeof user !== "undefined" && user ? user.full_name : "Guest" %>',
-                    email: '<%= typeof user !== "undefined" && user ? user.email : "" %>',
-                    contact: '9999999999'
-                },
-                theme: {
-                    color: '#ff6b6b'
+                });
+
+                const order = await response.json();
+                console.log('Order creation response:', order);
+
+                // Check server response
+                if (!response.ok) {
+                    throw new Error(order.error || 'Unable to create Razorpay order');
                 }
-            };
-            const rzp1 = new Razorpay(options);
-            rzp1.open();
-        };
+
+                // Check order error
+                if (order.error) {
+                    throw new Error(order.error);
+                }
+
+                // Make sure order ID exists
+                if (!order.order_id) {
+                    throw new Error('Razorpay order ID was not received');
+                }
+
+                console.log('✅ Razorpay Order Created:', order.order_id);
+
+                // =====================================================
+                // STEP 2: RAZORPAY CHECKOUT OPTIONS
+                // =====================================================
+                const options = {
+                    // IMPORTANT: This is the Razorpay TEST KEY ID
+                    key: '<%= RAZORPAY_KEY_ID %>',
+                    amount: order.amount,
+                    currency: order.currency,
+                    name: 'KLH College Canteen',
+                    description: 'Canteen Order Payment',
+                    order_id: order.order_id,
+                    // =================================================
+                    // STEP 3: PAYMENT SUCCESS HANDLER
+                    // =================================================
+                    handler: async function (paymentResponse) {
+                        console.log('✅ Razorpay payment completed');
+                        console.log('Payment ID:', paymentResponse.razorpay_payment_id);
+                        console.log('Order ID:', paymentResponse.razorpay_order_id);
+                        console.log('Signature:', paymentResponse.razorpay_signature);
+
+                        try {
+                            // =============================================
+                            // STEP 4: VERIFY PAYMENT ON SERVER
+                            // =============================================
+                            const verifyRes = await fetch('/verify-payment', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    razorpay_order_id: paymentResponse.razorpay_order_id,
+                                    razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                                    razorpay_signature: paymentResponse.razorpay_signature
+                                })
+                            });
+
+                            const verifyData = await verifyRes.json();
+                            console.log('Payment verification:', verifyData);
+
+                            // =============================================
+                            // PAYMENT VERIFIED - Process Order
+                            // =============================================
+                            if (verifyRes.ok && verifyData.success) {
+                                console.log('✅ Payment verified successfully!');
+                                successMsg.textContent = '✅ Payment successful! Processing your order...';
+                                successMsg.style.display = 'block';
+
+                                // =========================================
+                                // STEP 5: PROCESS ORDER
+                                // =========================================
+                                const form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = '/process-payment';
+                                document.body.appendChild(form);
+                                form.submit();
+
+                            } else {
+                                console.error('❌ Payment verification failed:', verifyData);
+                                errorMsg.textContent = '❌ Payment verification failed: ' + (verifyData.message || 'Please try again');
+                                errorMsg.style.display = 'block';
+                                payButton.disabled = false;
+                                payButton.textContent = 'Pay Now';
+                            }
+
+                        } catch (verifyError) {
+                            console.error('❌ Verification error:', verifyError);
+                            errorMsg.textContent = '❌ Payment completed but verification failed. Please contact canteen.';
+                            errorMsg.style.display = 'block';
+                            payButton.disabled = false;
+                            payButton.textContent = 'Pay Now';
+                        }
+                    },
+                    // =================================================
+                    // PREFILL CUSTOMER INFORMATION
+                    // =================================================
+                    prefill: {
+                        name: '<%= typeof user !== "undefined" && user && user.full_name ? user.full_name : "KLH Student" %>',
+                        email: '<%= typeof user !== "undefined" && user && user.email ? user.email : "student@klh.edu.in" %>',
+                        contact: '+919999999999'
+                    },
+                    // =================================================
+                    // RAZORPAY THEME
+                    // =================================================
+                    theme: {
+                        color: '#667eea'
+                    },
+                    // =================================================
+                    // CHECKOUT MODAL
+                    // =================================================
+                    modal: {
+                        ondismiss: function () {
+                            console.log('Razorpay payment window closed');
+                            payButton.disabled = false;
+                            payButton.textContent = 'Pay Now';
+                        }
+                    }
+                };
+
+                // =====================================================
+                // STEP 6: CREATE RAZORPAY INSTANCE
+                // =====================================================
+                const rzp = new Razorpay(options);
+
+                // =====================================================
+                // PAYMENT FAILED EVENT
+                // =====================================================
+                rzp.on('payment.failed', function (response) {
+                    console.error('❌ Razorpay payment failed:', response.error);
+                    const errorDescription = response.error && response.error.description
+                        ? response.error.description
+                        : 'Please try again.';
+                    errorMsg.textContent = '❌ Payment failed: ' + errorDescription;
+                    errorMsg.style.display = 'block';
+                    payButton.disabled = false;
+                    payButton.textContent = 'Pay Now';
+                });
+
+                // =====================================================
+                // STEP 7: OPEN RAZORPAY CHECKOUT
+                // =====================================================
+                console.log('Opening Razorpay Checkout...');
+                rzp.open();
+
+            } catch (error) {
+                console.error('❌ Razorpay error:', error);
+                errorMsg.textContent = '❌ Payment error: ' + error.message;
+                errorMsg.style.display = 'block';
+                payButton.disabled = false;
+                payButton.textContent = 'Pay Now';
+            }
+        });
     </script>
 </body>
 </html>
+

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
@@ -41,19 +42,22 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // ==================== SUPABASE SETUP ====================
+// ==================== SUPABASE SETUP ====================
 const supabase = createClient(
-    'https://hsweqjtfvqjvgaapvuvm.supabase.co', 
-    'sb_publishable_pjkaDrk_01WAqOZvYrdr7g_WY50OZUM'
+    process.env.SUPABASE_URL || 'https://hsweqjtfvqjvgaapvuvm.supabase.co', 
+    process.env.SUPABASE_KEY || 'sb_publishable_pjkaDrk_01WAqOZvYrdr7g_WY50OZUM'
 );
+
 
 console.log('🔗 Supabase connected');
 
 // ==================== RAZORPAY SETUP ====================
-// ==================== RAZORPAY SETUP ====================
 const razorpay = new Razorpay({
-    key_id: 'rzp_live_TOlZHH3nJ86Qpf',
-    key_secret: '8wd3e1siQGo3QefK4ypI0b3D',
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
 });
+
+console.log("✅ Razorpay configured with Key ID:", process.env.RAZORPAY_KEY_ID);
 
 // ==================== EMAIL SETUP ====================
 const transporter = nodemailer.createTransport({
@@ -216,61 +220,109 @@ app.get('/payment', (req, res) => {
     if (!req.session.idPhoto) return res.redirect('/camera');
     req.session.paymentVerified = false;
     const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    res.render('payment', { upiId: 'suryasreemanth01@okicici', total: total });
+    res.render('payment', { 
+        upiId: 'suryasreemanth01@okicici', 
+        total: total,
+        user: req.session.user || null,
+        RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID
+    });
 });
 
 app.get('/upi-payment', (req, res) => {
     if (!req.session.idPhoto) return res.redirect('/camera');
     req.session.paymentVerified = false;
     const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    res.render('upi-payment', { upiId: 'suryasreemanth01@okicici', total: total, classroom: req.session.classroom || 'Not specified' });
+    res.render('upi-payment', { 
+        upiId: 'suryasreemanth01@okicici', 
+        total: total, 
+        classroom: req.session.classroom || 'Not specified',
+        user: req.session.user || null,
+        RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID
+    });
 });
 
 // ==================== RAZORPAY PAYMENT ROUTES ====================
 
 // 1. Create Razorpay Order
 app.post('/create-razorpay-order', async (req, res) => {
+    console.log('📝 Creating Razorpay order...');
+    
     if (!req.session.cart || req.session.cart.length === 0) {
+        console.log('❌ Cart is empty');
         return res.status(400).json({ error: 'Cart is empty' });
     }
 
     const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const amountInPaise = total * 100;
 
+    console.log('💰 Total amount:', total, 'INR (', amountInPaise, 'paise)');
+
     const options = {
         amount: amountInPaise,
         currency: 'INR',
         receipt: `receipt_${Date.now()}`,
-        payment_capture: '1'
+        payment_capture: 1
     };
 
     try {
         const response = await razorpay.orders.create(options);
+        console.log('✅ Razorpay order created:', response.id);
         res.json({
             order_id: response.id,
             currency: response.currency,
             amount: response.amount
         });
     } catch (error) {
-        console.error('Razorpay Order Error:', error);
-        res.status(500).json({ error: 'Failed to create order' });
+        console.error('❌ Razorpay Order Error:', error);
+        res.status(500).json({ error: 'Failed to create order: ' + error.message });
     }
 });
 
 // 2. Verify Payment and Process Order
 app.post('/verify-payment', async (req, res) => {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    console.log('🔍 Verifying payment...');
+    
+    const {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature
+    } = req.body;
 
-    const body = razorpay_order_id + '|' + razorpay_payment_id;
-    const expectedSignature = crypto.createHmac('sha256', '8wd3e1siQGo3QefK4ypI0b3D')
-                                     .update(body.toString())
-                                     .digest('hex');
+    console.log('📦 Order ID:', razorpay_order_id);
+    console.log('💳 Payment ID:', razorpay_payment_id);
+    console.log('🔑 Signature:', razorpay_signature);
 
-    if (expectedSignature === razorpay_signature) {
-        req.session.paymentVerified = true;
-        res.json({ success: true, redirectUrl: '/' });
-    } else {
-        res.status(400).json({ success: false, message: 'Payment verification failed' });
+    try {
+        const body = razorpay_order_id + '|' + razorpay_payment_id;
+        const expectedSignature = crypto
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+            .update(body)
+            .digest('hex');
+
+        console.log('✅ Expected signature:', expectedSignature);
+
+        if (expectedSignature === razorpay_signature) {
+            req.session.paymentVerified = true;
+            console.log("✅ Payment verified successfully!");
+
+            return res.json({
+                success: true,
+                message: 'Payment verified successfully!'
+            });
+        }
+
+        console.log("❌ Signature mismatch!");
+        return res.status(400).json({
+            success: false,
+            message: 'Payment verification failed - Invalid signature'
+        });
+
+    } catch (error) {
+        console.error("❌ Payment verification error:", error);
+        return res.status(500).json({
+            success: false,
+            message: 'Payment verification error: ' + error.message
+        });
     }
 });
 
@@ -550,4 +602,29 @@ app.get('/test', (req, res) => {
 // ==================== START SERVER ====================
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🔑 Razorpay Key ID: ${process.env.RAZORPAY_KEY_ID}`);
+});
+
+// ==================== ADD THESE ROUTES TO YOUR SERVER.JS ====================
+
+// Get cart (for canteen.ejs)
+app.get('/get-cart', (req, res) => {
+    res.json({ cart: req.session.cart || [] });
+});
+
+// Update cart (for canteen.ejs)
+app.post('/update-cart-json', (req, res) => {
+    req.session.cart = req.body.cart || [];
+    res.json({ success: true });
+});
+
+// Canteen page (redirects to home if not logged in)
+app.get('/canteen', (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+    res.render('canteen', { 
+        user: req.session.user,
+        cart: req.session.cart || []
+    });
 });
