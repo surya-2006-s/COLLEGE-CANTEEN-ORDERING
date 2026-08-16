@@ -6,10 +6,15 @@
 
 body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-            url('/images/klh-building.jpg') no-repeat center center fixed;
+    
+    /* THIS IS THE NEW BACKGROUND CODE */
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+                url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600') no-repeat center center fixed;
     background-size: cover;
-    /* ... rest of code ... */
+    /* ---------------------------------- */
+    
+    min-height: 100vh;
+    color: #333;
 }
 
 .container {
