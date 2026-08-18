@@ -214,8 +214,13 @@ app.get('/camera', (req, res) => {
 
 app.post('/upload-id', upload.single('idPhoto'), (req, res) => {
     if (req.file) req.session.idPhoto = req.file.filename;
+    
+    // 👇 ADD THIS ONE LINE TO SAVE THE ROLL NUMBER
+    req.session.rollNumber = req.body.rollNumber; 
+
     res.redirect('/payment');
 });
+
 
 // 7. PAYMENT PAGES
 app.get('/payment', (req, res) => {

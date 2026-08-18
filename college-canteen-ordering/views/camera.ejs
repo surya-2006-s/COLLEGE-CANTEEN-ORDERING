@@ -5,6 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload ID Card - College Canteen</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Styling for the new Roll Number section */
+        .roll-number-section {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+        }
+        .roll-number-section label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .roll-number-section input {
+            width: 80%;
+            max-width: 350px;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 18px;
+            text-align: center;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+        .roll-number-section input:focus {
+            border-color: #ff6b6b;
+        }
+        .error-text {
+            color: #ff4444;
+            font-size: 14px;
+            display: none;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -22,41 +58,27 @@
             </div>
             
             <form id="uploadForm" action="/upload-id" method="POST" enctype="multipart/form-data">
+                <!-- Hidden input for Roll Number to be sent to the server -->
+                <input type="hidden" id="rollNumberInput" name="rollNumber" value="">
+                
                 <input type="file" id="fileInput" name="idPhoto" accept="image/*" style="display: none;">
-                <button type="submit" id="submitPhoto" class="button" style="display: none; margin-top: 20px;">Upload & Continue</button>
+                
+                <div id="preview" style="display: none; margin-top: 20px;">
+                    <h3>Preview:</h3>
+                    <img id="previewImage" width="400" height="300" style="border-radius: 10px; margin: 10px 0;">
+                    
+                    <!-- ===== NEW ROLL NUMBER INPUT ===== -->
+                    <div class="roll-number-section">
+                        <label for="rollNumber">🎓 Enter Your Roll Number:</label>
+                        <input type="text" id="rollNumber" placeholder="e.g. 22BCE1234" required>
+                        <div id="rollError" class="error-text">⚠️ Please enter your Roll Number before continuing!</div>
+                    </div>
+
+                    <button type="button" onclick="validateAndSubmit()" class="button">Confirm & Continue</button>
+                </div>
             </form>
-            
-            <div id="preview" style="display: none; margin-top: 20px;">
-                <h3>Preview:</h3>
-                <img id="previewImage" width="400" height="300" style="border-radius: 10px; margin: 10px 0;">
-                <button onclick="document.getElementById('uploadForm').submit()" class="button">Confirm & Continue</button>
-            </div>
         </div>
-
-        <!-- ============================================== -->
-        <!-- ===== NEW SECTION ADDED BELOW HERE ===== -->
-        <!-- ============================================== -->
-        <div class="additional-info-section" style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.8); border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            <h3 style="color: #ff6b6b; margin-bottom: 15px;">📋 Important Instructions</h3>
-            
-            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 600px; margin: 0 auto;">
-                <div style="flex: 1; min-width: 150px; padding: 10px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                    <span style="font-size: 24px;">📸</span>
-                    <p style="font-size: 14px; margin-top: 5px; color: #555;">Clear close-up of your face</p>
-                </div>
-                <div style="flex: 1; min-width: 150px; padding: 10px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                    <span style="font-size: 24px;">🪪</span>
-                    <p style="font-size: 14px; margin-top: 5px; color: #555;">College ID card must be visible</p>
-                </div>
-                <div style="flex: 1; min-width: 150px; padding: 10px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                    <span style="font-size: 24px;">☀️</span>
-                    <p style="font-size: 14px; margin-top: 5px; color: #555;">Good lighting recommended</p>
-                </div>
-            </div>
-        </div>
-        <!-- ===== NEW SECTION ENDS HERE ===== -->
-
-    </div> <!-- Closing the main container -->
+    </div>
 
     <script>
         const video = document.getElementById('video');
@@ -66,7 +88,9 @@
         const previewImage = document.getElementById('previewImage');
         const uploadForm = document.getElementById('uploadForm');
         const fileInput = document.getElementById('fileInput');
-        const submitPhoto = document.getElementById('submitPhoto');
+        const rollNumberInput = document.getElementById('rollNumber');
+        const rollNumberHidden = document.getElementById('rollNumberInput');
+        const rollError = document.getElementById('rollError');
 
         async function startCamera() {
             try {
@@ -81,6 +105,7 @@
 
         startCamera();
 
+        // Handle "Take Photo" Button
         capture.addEventListener('click', () => {
             canvas.getContext('2d').drawImage(video, 0, 0, 400, 300);
             const imageData = canvas.toDataURL('image/jpeg');
@@ -94,20 +119,19 @@
                 
                 previewImage.src = imageData;
                 preview.style.display = 'block';
-                submitPhoto.style.display = 'block';
                 video.style.display = 'none';
                 capture.style.display = 'none';
                 document.getElementById('uploadBtn').style.display = 'none';
             }, 'image/jpeg');
         });
 
+        // Handle "Upload Photo" Button
         fileInput.addEventListener('change', (e) => {
             if (e.target.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     previewImage.src = e.target.result;
                     preview.style.display = 'block';
-                    submitPhoto.style.display = 'block';
                     video.style.display = 'none';
                     capture.style.display = 'none';
                     document.getElementById('uploadBtn').style.display = 'none';
@@ -115,6 +139,25 @@
                 reader.readAsDataURL(e.target.files[0]);
             }
         });
+
+        // ===== NEW VALIDATION FUNCTION =====
+        function validateAndSubmit() {
+            const rollValue = rollNumberInput.value.trim();
+
+            // If Roll Number is empty, show error and stop
+            if (rollValue === "") {
+                rollError.style.display = 'block';
+                rollNumberInput.style.borderColor = '#ff4444';
+                return;
+            }
+
+            // Validation passed! Hide error, set the hidden input value, and submit the form
+            rollError.style.display = 'none';
+            rollNumberInput.style.borderColor = '#ddd';
+            rollNumberHidden.value = rollValue; // Send the value to the server
+            
+            uploadForm.submit();
+        }
     </script>
 </body>
 </html>
