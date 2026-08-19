@@ -183,23 +183,7 @@ app.post('/update-cart', (req, res) => {
 });
 
 // 5. CLASSROOM
-app.get('/classroom', (req, res) => {
-    if (!req.session.cart || req.session.cart.length === 0) return res.redirect('/');
-    const total = req.session.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    if (total < 10) return res.redirect('/cart?error=minOrder');
-    
-    const floors = ['-1', '0', '1', '2', '3', '4'];
-    const rooms = [];
-    for (let floor of floors) {
-        for (let roomNum = 1; roomNum <= 7; roomNum++) {
-            rooms.push({
-                floor: floor,
-                number: `${floor === '-1' ? 'B' : floor}${roomNum.toString().padStart(2, '0')}`
-            });
-        }
-    }
-    res.render('classroom', { rooms: rooms });
-});
+
 
 app.post('/save-classroom', (req, res) => {
     req.session.classroom = req.body.classroom;
@@ -207,10 +191,15 @@ app.post('/save-classroom', (req, res) => {
 });
 
 // 6. CAMERA & UPLOAD
+// 6. CAMERA & UPLOAD
 app.get('/camera', (req, res) => {
-    if (!req.session.classroom) return res.redirect('/classroom');
+    // If classroom doesn't exist, we automatically set it to "N/A"
+    if (!req.session.classroom) {
+        req.session.classroom = "N/A"; 
+    }
     res.render('camera');
 });
+
 
 app.post('/upload-id', upload.single('idPhoto'), (req, res) => {
     if (req.file) req.session.idPhoto = req.file.filename;
