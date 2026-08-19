@@ -472,14 +472,17 @@ ${orderItemsText}
         console.log('✅ Order email sent successfully!');
         console.log('📧 Email ID:', info.messageId);
 
-                const orderData = {
-            rollNumber: req.session.rollNumber || 'N/A',       // ADDED
-            studentEmail: req.session.studentEmail || 'N/A',   // ADDED
-            items: JSON.stringify(req.session.cart),           // FIXED: Converted to JSON string
+                 // Create a clean text string for the items instead of JSON
+                const itemsString = req.session.cart.map(item => `${item.name} x${item.quantity}`).join(', ');
+
+        const orderData = {
+            rollNumber: req.session.rollNumber || 'N/A',
+            studentEmail: req.session.studentEmail || 'N/A',
+            items: itemsString,
             total: total,
             status: 'pending'
         };
-        
+
 
         const { data, error } = await supabase
             .from('orders')
