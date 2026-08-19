@@ -60,7 +60,7 @@
             <form id="uploadForm" action="/upload-id" method="POST" enctype="multipart/form-data">
                 <!-- Hidden input for Roll Number to be sent to the server -->
                 <input type="hidden" id="rollNumberInput" name="rollNumber" value="">
-                
+                <input type="hidden" id="emailInput" name="studentEmail" value=""> <!-- NEW -->
                 <input type="file" id="fileInput" name="idPhoto" accept="image/*" style="display: none;">
                 
                 <div id="preview" style="display: none; margin-top: 20px;">
@@ -68,10 +68,17 @@
                     <img id="previewImage" width="400" height="300" style="border-radius: 10px; margin: 10px 0;">
                     
                     <!-- ===== NEW ROLL NUMBER INPUT ===== -->
+                    <!-- ===== ROLL NUMBER AND EMAIL INPUT ===== -->
                     <div class="roll-number-section">
                         <label for="rollNumber">🎓 Enter Your Roll Number:</label>
                         <input type="text" id="rollNumber" placeholder="e.g. 22BCE1234" required>
-                        <div id="rollError" class="error-text">⚠️ Please enter your Roll Number before continuing!</div>
+                        <div id="rollError" class="error-text">⚠️ Please enter your Roll Number!</div>
+
+                        <br><br>
+
+                        <label for="studentEmail">📧 Enter Your Email (for updates):</label>
+                        <input type="email" id="studentEmail" placeholder="student@klh.edu.in" required>
+                        <div id="emailError" class="error-text">⚠️ Please enter a valid Email!</div>
                     </div>
 
                     <button type="button" onclick="validateAndSubmit()" class="button">Confirm & Continue</button>
@@ -161,3 +168,37 @@
     </script>
 </body>
 </html>
+// ===== UPDATED VALIDATION FUNCTION =====
+function validateAndSubmit() {
+    const rollValue = document.getElementById('rollNumber').value.trim();
+    const emailValue = document.getElementById('studentEmail').value.trim();
+    
+    let isValid = true;
+
+    // Check Roll Number
+    if (rollValue === "") {
+        document.getElementById('rollError').style.display = 'block';
+        document.getElementById('rollNumber').style.borderColor = '#ff4444';
+        isValid = false;
+    } else {
+        document.getElementById('rollError').style.display = 'none';
+        document.getElementById('rollNumber').style.borderColor = '#ddd';
+    }
+
+    // Check Email
+    if (emailValue === "" || !emailValue.includes('@')) {
+        document.getElementById('emailError').style.display = 'block';
+        document.getElementById('studentEmail').style.borderColor = '#ff4444';
+        isValid = false;
+    } else {
+        document.getElementById('emailError').style.display = 'none';
+        document.getElementById('studentEmail').style.borderColor = '#ddd';
+    }
+
+    if (isValid) {
+        // Set hidden fields to submit to server
+        document.getElementById('rollNumberInput').value = rollValue;
+        document.getElementById('emailInput').value = emailValue; // We'll add this hidden input below!
+        uploadForm.submit();
+    }
+}
