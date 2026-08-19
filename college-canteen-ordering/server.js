@@ -291,23 +291,16 @@ app.post('/create-razorpay-order', async (req, res) => {
 });
 
 // 2. Verify Payment and Process Order
+// ==================== SAVE ORDER TO SHEETDB (ALIAS EXCEL) ====================
+const SHEETDB_URL = 'https://sheetdb.io/api/v1/k3vmugrdsparv'; // 🔴 PASTE YOUR SHEETDB URL HERE
+
 app.post('/verify-payment', async (req, res) => {
     console.log('🔍 Verifying payment...');
-    
-    const {
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature
-    } = req.body;
-
-    console.log('📦 Order ID:', razorpay_order_id);
-    console.log('💳 Payment ID:', razorpay_payment_id);
-    console.log('🔑 Signature:', razorpay_signature);
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     try {
         if (!process.env.RAZORPAY_KEY_SECRET) {
-            console.error('❌ Cannot verify payment: missing RAZORPAY_KEY_SECRET');
-            return res.status(500).json({ success: false, message: 'Server misconfiguration: razorpay secret missing' });
+            return res.status(500).json({ success: false, message: 'Server misconfiguration' });
         }
 
         const body = razorpay_order_id + '|' + razorpay_payment_id;
@@ -316,30 +309,57 @@ app.post('/verify-payment', async (req, res) => {
             .update(body)
             .digest('hex');
 
-        console.log('✅ Expected signature:', expectedSignature);
-
         if (expectedSignature === razorpay_signature) {
             req.session.paymentVerified = true;
             console.log("✅ Payment verified successfully!");
 
-            return res.json({
-                success: true,
-                message: 'Payment verified successfully!'
-            });
+            // ==========================================
+            // ===== SAVE DATA TO SHEETDB (EXCEL) =======
+            // ==========================================
+            try {
+                const cart = req.session.cart || [];
+                const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const itemsString = cart.map(item => `${item.name} x${item.quantity}`).join(', ');
+
+                // Prepare the data row matching your column headers
+                const newRow = {
+                    data: [{
+                        Date: new Date().toLocaleString(),
+                        "Roll Number": req.session.rollNumber || 'N/A',
+                        Classroom: req.session.classroom || 'N/A',
+                        Items: itemsString,
+                        Total: `₹${total}`,
+                        "Payment ID": razorpay_payment_id,
+                        Status: 'Success'
+                    }]
+                };
+
+                // Send data to SheetDB
+                const response = await fetch(SHEETDB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newRow)
+                });
+
+                if (response.ok) {
+                    console.log('✅ Order saved to Google Sheet (via SheetDB) successfully!');
+                } else {
+                    console.error('❌ Failed to save to SheetDB:', await response.text());
+                }
+
+            } catch (sheetError) {
+                console.error('❌ Error saving to Excel:', sheetError.message);
+            }
+            // ==========================================
+
+            return res.json({ success: true, message: 'Payment verified successfully!' });
         }
 
-        console.log("❌ Signature mismatch!");
-        return res.status(400).json({
-            success: false,
-            message: 'Payment verification failed - Invalid signature'
-        });
+        return res.status(400).json({ success: false, message: 'Payment verification failed' });
 
     } catch (error) {
         console.error("❌ Payment verification error:", error);
-        return res.status(500).json({
-            success: false,
-            message: 'Payment verification error: ' + error.message
-        });
+        return res.status(500).json({ success: false, message: error.message });
     }
 });
 
