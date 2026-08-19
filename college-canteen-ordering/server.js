@@ -203,12 +203,12 @@ app.get('/camera', (req, res) => {
 
 app.post('/upload-id', upload.single('idPhoto'), (req, res) => {
     if (req.file) req.session.idPhoto = req.file.filename;
+    req.session.rollNumber = req.body.rollNumber;
+    req.session.studentEmail = req.body.studentEmail; // SAVE THE EMAIL
     
-    // 👇 ADD THIS ONE LINE TO SAVE THE ROLL NUMBER
-    req.session.rollNumber = req.body.rollNumber; 
-
     res.redirect('/payment');
 });
+
 
 
 // 7. PAYMENT PAGES
@@ -284,7 +284,6 @@ app.post('/create-razorpay-order', async (req, res) => {
 const SHEETDB_URL = 'https://sheetdb.io/api/v1/k3vmugrdsparv'; // 🔴 PASTE YOUR SHEETDB URL HERE
 
 app.post('/verify-payment', async (req, res) => {
-    console.log('🔍 Verifying payment...');
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     try {
@@ -300,54 +299,72 @@ app.post('/verify-payment', async (req, res) => {
 
         if (expectedSignature === razorpay_signature) {
             req.session.paymentVerified = true;
-            console.log("✅ Payment verified successfully!");
+            
+            // =======================================================
+            // 1. SEND THE CONFIRMATION EMAIL TO STUDENT
+            // =======================================================
+            const studentEmail = req.session.studentEmail;
+            const itemsList = req.session.cart.map(i => `${i.name} x${i.quantity}`).join(', ');
+            const total = req.session.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
 
-            // ==========================================
-            // ===== SAVE DATA TO SHEETDB (EXCEL) =======
-            // ==========================================
+            if (studentEmail) {
+                const mailOptions = {
+                    from: process.env.EMAIL_USER,
+                    to: studentEmail,
+                    subject: '🍽️ Order Confirmed - KLH Canteen!',
+                    html: `
+                        <h2>✅ Your Order is Confirmed!</h2>
+                        <p>Hi <strong>${req.session.rollNumber}</strong>,</p>
+                        <p>We have received your payment and are preparing your food.</p>
+                        <h3>Order Details:</h3>
+                        <ul>
+                            <li><strong>Items:</strong> ${itemsList}</li>
+                            <li><strong>Total:</strong> ₹${total}</li>
+                            <li><strong>Payment ID:</strong> ${razorpay_payment_id}</li>
+                        </ul>
+                        <p>We will send you another email when your order is ready for pickup!</p>
+                        <p>Thanks,<br>KLH Canteen Team</p>
+                    `
+                };
+                // Send email in background (don't crash if fails)
+                transporter.sendMail(mailOptions).catch(e => console.log("Email error:", e.message));
+            }
+
+            // =======================================================
+            // 2. SAVE TO GOOGLE SHEET (INCLUDING THE EMAIL)
+            // =======================================================
             try {
                 const cart = req.session.cart || [];
-                const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 const itemsString = cart.map(item => `${item.name} x${item.quantity}`).join(', ');
-
-                // Prepare the data row matching your column headers
                 const newRow = {
                     data: [{
                         Date: new Date().toLocaleString(),
                         "Roll Number": req.session.rollNumber || 'N/A',
+                        "Email": req.session.studentEmail || 'N/A', // NEW COLUMN
                         Classroom: req.session.classroom || 'N/A',
                         Items: itemsString,
                         Total: `₹${total}`,
                         "Payment ID": razorpay_payment_id,
-                        Status: 'Success'
+                        Status: 'Pending'
                     }]
                 };
 
-                // Send data to SheetDB
-                const response = await fetch(SHEETDB_URL, {
+                await fetch(process.env.SHEETDB_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newRow)
                 });
+                console.log('✅ Order saved to Excel.');
+            } catch (e) { console.log("SheetDB error:", e.message); }
 
-                if (response.ok) {
-                    console.log('✅ Order saved to Google Sheet (via SheetDB) successfully!');
-                } else {
-                    console.error('❌ Failed to save to SheetDB:', await response.text());
-                }
+            // =======================================================
 
-            } catch (sheetError) {
-                console.error('❌ Error saving to Excel:', sheetError.message);
-            }
-            // ==========================================
-
-            return res.json({ success: true, message: 'Payment verified successfully!' });
+            return res.json({ success: true, message: 'Payment verified' });
         }
 
-        return res.status(400).json({ success: false, message: 'Payment verification failed' });
+        return res.status(400).json({ success: false, message: 'Invalid signature' });
 
     } catch (error) {
-        console.error("❌ Payment verification error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -455,13 +472,14 @@ ${orderItemsText}
         console.log('✅ Order email sent successfully!');
         console.log('📧 Email ID:', info.messageId);
 
-        const orderData = {
-            classroom: classroom,
-            items: req.session.cart,
+                const orderData = {
+            rollNumber: req.session.rollNumber || 'N/A',       // ADDED
+            studentEmail: req.session.studentEmail || 'N/A',   // ADDED
+            items: JSON.stringify(req.session.cart),           // FIXED: Converted to JSON string
             total: total,
-            status: 'pending',
-            user_id: req.session.user ? req.session.user.id : null
+            status: 'pending'
         };
+        
 
         const { data, error } = await supabase
             .from('orders')
@@ -653,4 +671,33 @@ app.get('/canteen', (req, res) => {
         user: req.session.user,
         cart: req.session.cart || []
     });
+});
+// ==================== ADMIN: MARK ORDER AS READY ====================
+app.post('/admin/mark-ready', async (req, res) => {
+    if (!req.session.isAdmin) return res.redirect('/admin-login');
+    
+    const { orderId, studentEmail, studentRoll } = req.body;
+
+    // 1. Update the database (Supabase/SheetDB) to "Ready"
+    // NOTE: This depends on how you stored your data. Assuming Supabase:
+    await supabase.from('orders').update({ status: 'ready' }).eq('id', orderId);
+
+    // 2. Send the "Ready for Pickup" Email to the Student!
+    if (studentEmail) {
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: studentEmail,
+            subject: '📢 Your Canteen Order is Ready for Pickup!',
+            html: `
+                <h2>🎉 Your Order is Ready!</h2>
+                <p>Hi <strong>${studentRoll}</strong>,</p>
+                <p>Great news! Your food has been prepared and is <strong>ready for pickup</strong> at the KLH Canteen counter.</p>
+                <p>Please show your Student ID to collect your order.</p>
+                <p>Thank you for choosing KLH Canteen!</p>
+            `
+        };
+        transporter.sendMail(mailOptions).catch(e => console.log("Email error:", e.message));
+    }
+
+    res.redirect('/admin/dashboard');
 });
