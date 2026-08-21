@@ -327,11 +327,13 @@ app.post('/verify-payment', async (req, res) => {
             // ========================
             // SAVE TO SUPABASE DASHBOARD
             // ========================
+            const istTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
             const orderData = {
                 rollNumber: req.session.rollNumber || 'N/A',
                 studentEmail: req.session.studentEmail || 'N/A',
                 items: itemsString,
                 total: total,
+                created_at: istTime, // This fixes the time
                 status: 'pending'
             };
             const { data, error } = await supabase.from('orders').insert([orderData]);
@@ -455,7 +457,7 @@ app.get('/test-excel', async (req, res) => {
     try {
         const testData = {
             data: [{
-                Date: new Date().toLocaleString(),
+                Date: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
                 "Roll Number": "22BCE9999",
                 "Email": "teststudent@klh.edu.in",
                 "Classroom": "N/A",
