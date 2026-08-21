@@ -176,6 +176,29 @@
             margin-left: 10px;
         }
 
+        /* Mark Ready Button Styles */
+        .btn-ready {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+        }
+        .btn-ready:hover {
+            transform: scale(1.05);
+            background: #218838;
+        }
+        .btn-ready:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
         @media (max-width: 768px) {
             .stats {
                 grid-template-columns: repeat(2, 1fr);
@@ -254,23 +277,26 @@
                 <thead>
                     <tr>
                         <th>#Order</th>
-                        <th>Classroom</th>
+                        <th>Roll #</th>
+                        <th>Email</th>
                         <th>Items</th>
                         <th>Total</th>
                         <th>Status</th>
-                        <th>Time</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <% orders.forEach(order => { %>
                     <tr>
-                        <td><strong>#<%= order._id.toString().slice(-6) %></strong></td>
-                        <td>🏫 <%= order.classroom %></td>
+                        <td><strong>#<%= order.id.toString().slice(-6) %></strong></td>
+                        <td>🎓 <%= order.rollNumber || 'N/A' %></td>
+                        <td>📧 <%= order.studentEmail || 'N/A' %></td>
                         <td>
-                            <% order.items.forEach((item, index) => { %>
-                                <%= item.name %> x<%= item.quantity %><% if (index < order.items.length - 1) { %>, <% } %>
-                            <% }) %>
+                            <% if (order.items && typeof order.items === 'string') { %>
+                                <%= order.items %>
+                            <% } else { %>
+                                N/A
+                            <% } %>
                         </td>
                         <td><strong>₹<%= order.total %></strong></td>
                         <td>
@@ -278,17 +304,17 @@
                                 <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
                             </span>
                         </td>
-                        <td><%= new Date(order.createdAt).toLocaleTimeString() %></td>
                         <td>
-                            <form action="/admin/update-order" method="POST" style="display: inline;">
-                                <input type="hidden" name="orderId" value="<%= order._id %>">
-                                <select name="status" class="status-select" onchange="this.form.submit()">
-                                    <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
-                                    <option value="preparing" <%= order.status === 'preparing' ? 'selected' : '' %>>Preparing</option>
-                                    <option value="ready" <%= order.status === 'ready' ? 'selected' : '' %>>Ready</option>
-                                    <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
-                                </select>
-                            </form>
+                            <% if (order.status === 'ready') { %>
+                                <button class="btn-ready" disabled>✅ Ready</button>
+                            <% } else { %>
+                                <form action="/admin/mark-ready" method="POST" style="display: inline;">
+                                    <input type="hidden" name="orderId" value="<%= order.id %>">
+                                    <input type="hidden" name="studentEmail" value="<%= order.studentEmail || '' %>">
+                                    <input type="hidden" name="studentRoll" value="<%= order.rollNumber || '' %>">
+                                    <button type="submit" class="btn-ready">🟢 Mark Ready</button>
+                                </form>
+                            <% } %>
                         </td>
                     </tr>
                     <% }) %>

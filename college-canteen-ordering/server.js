@@ -225,7 +225,7 @@ app.get('/camera', (req, res) => {
 app.post('/upload-id', upload.single('idPhoto'), (req, res) => {
     if (req.file) req.session.idPhoto = req.file.filename;
     req.session.rollNumber = req.body.rollNumber;
-    req.session.studentEmail = req.body.studentEmail;
+    req.session.studentEmail = req.body.studentEmail; // This MUST be here!
     res.redirect('/payment');
 });
 
@@ -334,7 +334,15 @@ app.post('/verify-payment', async (req, res) => {
                 total: total,
                 status: 'pending'
             };
-            await supabase.from('orders').insert([orderData]);
+            const { data, error } = await supabase.from('orders').insert([orderData]);
+
+            // Store the inserted order's ID so we can look it up later!
+            if (error) {
+                console.log("Error saving to Supabase:", error.message);
+            } else {
+                console.log("Order saved with ID:", data[0].id);
+                req.session.lastOrderId = data[0].id; // Saves the ID in session
+            }
 
             return res.json({ success: true, message: 'Payment verified' });
         }
@@ -480,7 +488,41 @@ app.get('/test-excel', async (req, res) => {
         res.send(`<h1 style="color: red;">❌ Error</h1><p>${error.message}</p>`);
     }
 });
+// ==================== ADMIN: MARK ORDER AS READY ====================
+app.post('/admin/mark-ready', async (req, res) => {
+    if (!req.session.isAdmin) return res.redirect('/admin-login');
+    
+    const { orderId, studentEmail, studentRoll } = req.body;
 
+    // 1. Update the database (Supabase) to "Ready"
+    const { error: updateError } = await supabase.from('orders').update({ status: 'ready' }).eq('id', orderId);
+    if (updateError) console.log("Update error:", updateError.message);
+
+    // 2. Send the "Ready for Pickup" Email to the Student!
+    if (studentEmail && studentEmail !== 'N/A') {
+        const mailOptions = {
+            from: process.env.EMAIL_USER, // Your Gmail
+            to: studentEmail, // Student's email
+            subject: '📢 Your Canteen Order is Ready for Pickup!',
+            html: `
+                <h2>🎉 Your Order is Ready!</h2>
+                <p>Hi <strong>${studentRoll}</strong>,</p>
+                <p>Great news! Your food has been prepared and is <strong>ready for pickup</strong> at the KLH Canteen counter.</p>
+                <p>Please show your Student ID to collect your order.</p>
+                <p>Thank you for choosing KLH Canteen!</p>
+            `
+        };
+        
+        // Send email in the background
+        transporter.sendMail(mailOptions)
+            .then(info => console.log("✅ Ready Email sent to:", studentEmail))
+            .catch(err => console.log("❌ Ready Email failed:", err.message));
+    } else {
+        console.log("No valid student email found for this order.");
+    }
+
+    res.redirect('/admin/dashboard');
+});
 // ==================== START SERVER ====================
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
