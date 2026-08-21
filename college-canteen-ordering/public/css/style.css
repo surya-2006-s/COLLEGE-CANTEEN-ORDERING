@@ -8,7 +8,7 @@ body {
     font-family: 'Arial', sans-serif;
     
     /* THIS IS THE NEW BACKGROUND CODE */
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
                 url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600') no-repeat center center fixed;
     background-size: cover;
     /* ---------------------------------- */
@@ -17,11 +17,26 @@ body {
     color: #333;
 }
 
+/* ==================== HEADER STYLES ==================== */
+header {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(10px);
+    padding: 15px 30px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+}
+
+/* Main container */
 .container {
     max-width: 1200px;
     margin: 20px auto;
     padding: 30px;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -377,6 +392,22 @@ h1 {
     /* margin removed to fix gap */
 }
 
+/* ==================== PILL BUTTON STYLES ==================== */
+.btn-pill {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+.btn-pill:hover {
+    transform: scale(1.05);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .categories {
@@ -400,5 +431,12 @@ h1 {
     h1 {
         font-size: 28px;
     }
-}
 
+    /* MOBILE SPECIFIC BUTTON STYLES */
+    .btn-pill {
+        padding: 10px 15px;
+        font-size: 14px;
+        border: 2px solid white !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.4) !important;
+    }
+}
