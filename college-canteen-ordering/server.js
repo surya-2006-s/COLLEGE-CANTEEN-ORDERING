@@ -60,6 +60,33 @@ if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
     console.warn('❌ Razorpay keys are missing from environment. Orders will fail until RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are set on the server.');
 }
 
+// ==================== ORDER WINDOW SETTINGS ====================
+const settingsPath = path.join(__dirname, 'settings.json');
+
+// Function to get current settings
+function getSettings() {
+    try {
+        return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    } catch (e) {
+        return { isOpen: true, openTime: "08:00", closeTime: "17:00" }; // Defaults
+    }
+}
+
+// Function to check if ordering is currently allowed
+function isOrderWindowOpen() {
+    const settings = getSettings();
+    if (!settings.isOpen) return false;
+
+    const now = new Date();
+    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    // Check if current time is between openTime and closeTime
+    if (currentTime >= settings.openTime && currentTime < settings.closeTime) {
+        return true;
+    }
+    return false;
+}
+
 // ==================== ROUTES ====================
 
 // 1. HOME PAGE
@@ -94,9 +121,23 @@ app.get('/', async (req, res) => {
     }
 });
 
-// 2. MENU PAGE
+// 2. MENU PAGE (WITH TIME CHECK)
 app.get('/menu/:category', async (req, res) => {
     const category = req.params.category;
+
+    // 🚨 BLOCK ORDERS IF CLOSED
+    if (!isOrderWindowOpen()) {
+        const settings = getSettings();
+        return res.send(`
+            <h1 style="text-align:center; margin-top: 50px;">🛑 Orders are Closed!</h1>
+            <p style="text-align:center; font-size: 18px;">Kitchen is preparing food. <br> Please order again between <strong>${settings.openTime}</strong> and <strong>${settings.closeTime}</strong>.</p>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/" style="padding: 10px 20px; background: #ff6b6b; color: white; text-decoration: none; border-radius: 5px;">Back to Home</a>
+            </div>
+        `);
+    }
+    // 🚨 END TIME CHECK
+
     let items = [];
 
     try {
@@ -140,9 +181,16 @@ app.post('/add-to-cart', (req, res) => {
     res.redirect(`/menu/${category}`);
 });
 
-// 4. CART PAGE
+// 4. CART PAGE (WITH TIME CHECK)
 app.get('/cart', (req, res) => {
     const error = req.query.error || null;
+
+    // 🚨 BLOCK CART IF CLOSED
+    if (!isOrderWindowOpen()) {
+        return res.redirect('/'); 
+    }
+    // 🚨 END TIME CHECK
+
     res.render('cart', { cart: req.session.cart || [], error: error });
 });
 
@@ -164,6 +212,10 @@ app.post('/update-cart', (req, res) => {
 
 // 5. CAMERA & UPLOAD
 app.get('/camera', (req, res) => {
+    // 🚨 BLOCK PAYMENT PROCESS IF CLOSED
+    if (!isOrderWindowOpen()) {
+        return res.redirect('/');
+    }
     if (!req.session.classroom) {
         req.session.classroom = "N/A"; 
     }
@@ -369,6 +421,22 @@ app.get('/admin/dashboard', async (req, res) => {
     }
 });
 
+// ==================== ADMIN: UPDATE ORDER WINDOW ====================
+app.post('/admin/update-window', (req, res) => {
+    if (!req.session.isAdmin) return res.redirect('/admin-login');
+    
+    const { isOpen, openTime, closeTime } = req.body;
+    
+    const newSettings = {
+        isOpen: isOpen === 'true',
+        openTime: openTime || "08:00",
+        closeTime: closeTime || "17:00"
+    };
+
+    fs.writeFileSync(settingsPath, JSON.stringify(newSettings, null, 2));
+    res.redirect('/admin/dashboard');
+});
+
 app.get('/admin/logout', (req, res) => {
     req.session.isAdmin = false;
     res.redirect('/admin-login');
@@ -432,3 +500,4 @@ app.get('/canteen', (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     res.render('canteen', { user: req.session.user, cart: req.session.cart || [] });
 });
+
