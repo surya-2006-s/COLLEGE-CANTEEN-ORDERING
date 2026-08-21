@@ -67,6 +67,56 @@
             margin-top: 5px;
         }
 
+        /* Order Window Section Styles */
+        .order-window {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .order-window h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .order-window h2 span {
+            color: #667eea;
+        }
+        .window-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+        .window-controls label {
+            font-weight: bold;
+            color: #555;
+        }
+        .window-controls input[type="time"] {
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-left: 5px;
+        }
+        .window-controls input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        .save-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .save-btn:hover { background: #218838; }
+
         .orders-section {
             background: white;
             border-radius: 12px;
@@ -126,29 +176,6 @@
             margin-left: 10px;
         }
 
-        /* Action Button Styles */
-        .btn-ready {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
-        }
-        .btn-ready:hover {
-            transform: scale(1.05);
-            background: #218838;
-        }
-        .btn-ready:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
         @media (max-width: 768px) {
             .stats {
                 grid-template-columns: repeat(2, 1fr);
@@ -171,6 +198,32 @@
                 <a href="/admin/logout" class="logout-btn">🚪 Logout</a>
             </div>
         </div>
+
+        <!-- ==================== NEW: ORDER WINDOW SETTINGS ==================== -->
+        <div class="order-window">
+            <h2>⏰ <span>Order Window Control</span></h2>
+            <form action="/admin/update-window" method="POST">
+                <div class="window-controls">
+                    <label>
+                        <input type="checkbox" name="isOpen" value="true" checked> 
+                        Enable Orders
+                    </label>
+                    
+                    <label>
+                        Opens at:
+                        <input type="time" name="openTime" value="08:00">
+                    </label>
+                    
+                    <label>
+                        Closes at:
+                        <input type="time" name="closeTime" value="17:00">
+                    </label>
+                    
+                    <button type="submit" class="save-btn">💾 Save Window</button>
+                </div>
+            </form>
+        </div>
+        <!-- ==================== END ORDER WINDOW ==================== -->
 
         <!-- Stats -->
         <div class="stats">
@@ -201,46 +254,41 @@
                 <thead>
                     <tr>
                         <th>#Order</th>
-                        <th>Roll Number</th>
-                        <th>Email</th>
+                        <th>Classroom</th>
                         <th>Items</th>
                         <th>Total</th>
                         <th>Status</th>
+                        <th>Time</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <% orders.forEach(order => { %>
                     <tr>
-                        <td><strong>#<%= order._id ? order._id.toString().slice(-6) : 'N/A' %></strong></td>
-                        <td>🎓 <%= order.rollNumber || 'N/A' %></td>
-                        <td>📧 <%= order.studentEmail || 'N/A' %></td>
+                        <td><strong>#<%= order._id.toString().slice(-6) %></strong></td>
+                        <td>🏫 <%= order.classroom %></td>
                         <td>
-                            <% if (order.items && order.items.length > 0) { %>
-                                <% order.items.forEach((item, index) => { %>
-                                    <%= item.name %> x<%= item.quantity %><% if (index < order.items.length - 1) { %>, <% } %>
-                                <% }) %>
-                            <% } else { %>
-                                N/A
-                            <% } %>
+                            <% order.items.forEach((item, index) => { %>
+                                <%= item.name %> x<%= item.quantity %><% if (index < order.items.length - 1) { %>, <% } %>
+                            <% }) %>
                         </td>
-                        <td><strong>₹<%= order.total || 0 %></strong></td>
+                        <td><strong>₹<%= order.total %></strong></td>
                         <td>
-                            <span class="status status-<%= order.status || 'pending' %>">
-                                <%= order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Pending' %>
+                            <span class="status status-<%= order.status %>">
+                                <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
                             </span>
                         </td>
+                        <td><%= new Date(order.createdAt).toLocaleTimeString() %></td>
                         <td>
-                            <% if (order.status === 'ready') { %>
-                                <button class="btn-ready" disabled>✅ Ready</button>
-                            <% } else { %>
-                                <form action="/admin/mark-ready" method="POST" style="display: inline;">
-                                    <input type="hidden" name="orderId" value="<%= order._id %>">
-                                    <input type="hidden" name="studentEmail" value="<%= order.studentEmail || '' %>">
-                                    <input type="hidden" name="studentRoll" value="<%= order.rollNumber || '' %>">
-                                    <button type="submit" class="btn-ready">🟢 Mark Ready</button>
-                                </form>
-                            <% } %>
+                            <form action="/admin/update-order" method="POST" style="display: inline;">
+                                <input type="hidden" name="orderId" value="<%= order._id %>">
+                                <select name="status" class="status-select" onchange="this.form.submit()">
+                                    <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                    <option value="preparing" <%= order.status === 'preparing' ? 'selected' : '' %>>Preparing</option>
+                                    <option value="ready" <%= order.status === 'ready' ? 'selected' : '' %>>Ready</option>
+                                    <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                                </select>
+                            </form>
                         </td>
                     </tr>
                     <% }) %>
