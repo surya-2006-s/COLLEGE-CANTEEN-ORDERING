@@ -40,63 +40,49 @@
 
 </header>
 <!-- ==================== DSS FOOTER (Appears on every page) ==================== -->
+<!-- ==================== DSS FOOTER (Appears on every page) ==================== -->
 <style>
-    /* Footer Container */
     .dss-footer {
         position: fixed;
         bottom: 15px;
         right: 20px;
         z-index: 1000;
-        text-align: right;
-        opacity: 0.9;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 10px 15px;
+        border-radius: 50px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
-    /* Made By Text */
     .made-by {
-        font-size: 12px;
-        color: white;
+        font-size: 10px;
+        color: #333;
         font-weight: bold;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.8); /* Shadows so it shows on any background */
         margin-bottom: 5px;
     }
 
-    /* The DSS Logo Box */
-    .dss-logo {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-        color: white;
-        padding: 8px 15px;
-        border-radius: 12px;
-        display: inline-block;
-        font-family: 'Arial Black', sans-serif;
-        font-size: 20px;
-        font-weight: 900;
-        letter-spacing: 2px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-        transform: skewX(-10deg); /* Gives it a modern, slanted logo look */
+    .dss-img {
+        width: 70px; /* Adjust size here */
+        height: auto;
+        display: block;
+        object-fit: contain;
     }
 
-    /* CSS for the actual letters inside the logo */
-    .dss-logo span {
-        transform: skewX(10deg); /* Straightens the letters back */
-        display: inline-block;
-    }
-
-    /* Responsive: Hide footer on very small screens if needed */
     @media (max-width: 768px) {
         .dss-footer {
             bottom: 10px;
             right: 10px;
+            padding: 5px 10px;
         }
-        .dss-logo {
-            font-size: 16px;
-            padding: 6px 10px;
+        .dss-img {
+            width: 50px;
         }
     }
 </style>
 
 <div class="dss-footer">
     <div class="made-by">Made By:</div>
-    <img src="https://ibb.co/Dftrcd6K" alt="DSS Logo" class="dss-img">
+    <img src="/images/DSS.png" alt="DSS Logo" class="dss-img">
 </div>
+<!-- ==================== END DSS FOOTER ==================== -->
 <!-- ==================== END DSS FOOTER ==================== -->
