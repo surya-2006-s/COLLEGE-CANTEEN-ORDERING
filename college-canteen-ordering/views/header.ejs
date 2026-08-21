@@ -6,7 +6,8 @@
     <div style="display: flex; align-items: center; gap: 15px;">
         <a href="/" style="display: flex; align-items: center; text-decoration: none; color: inherit;">
             <!-- Use the local path, but add explicit width and height -->
-           <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/85/KL_University_logo.svg/1200px-KL_University_logo.svg.png" alt="KLH Logo" style="width: 200px; height: auto;">
+<img src="/images/klh-logo.png" alt="KLH Logo" style="width: 40px; height: 40px;">
+
             
         <!-- Since the logo has text, we hide the written text so it doesn't look awkward -->
         <!-- <span style="font-weight: bold; font-size: 20px; color: #333; display: none;">KLH Deemed to be University</span> -->
@@ -16,17 +17,25 @@
     </div>
 
     <!-- Top Right: User Greeting and Cart -->
-    <div style="display: flex; align-items: center; gap: 20px;">
-        <!-- Added safety check so Login page doesn't crash -->
-        <% if (typeof user !== 'undefined' && user) { %>
-            <span style="font-weight: bold; color: #333;">👋 Welcome, <strong><%= user.full_name || user.email %></strong></span>
-            <a href="/logout" style="color: #ff6b6b; text-decoration: none; font-weight: bold;">Logout</a>
-            <a href="/cart" style="color: #28a745; text-decoration: none; font-weight: bold;">🛒 Cart (<%= typeof cart !== 'undefined' && cart ? cart.length : 0 %>)</a>
-        <% } else { %>
-            <span style="color: #666;">👤 Guest</span>
-            <a href="/login" style="color: #ff6b6b; text-decoration: none; font-weight: bold;">Login</a>
-            <a href="/signup" style="color: #28a745; text-decoration: none; font-weight: bold;">Sign Up</a>
-        <% } %>
-    </div>
+    <!-- Top Right: User Greeting and Cart -->
+<div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+    <% if (typeof user !== 'undefined' && user) { %>
+        <span style="font-weight: bold; color: #333; white-space: nowrap;">👋 Welcome, <strong><%= user.full_name || user.email %></strong></span>
+        
+        <!-- New Pill Buttons -->
+        <a href="/cart" class="btn-pill" style="background-color: #28a745; color: white; border: 2px solid #1e7e34;">
+            🛒 Cart (<%= typeof cart !== 'undefined' && cart ? cart.length : 0 %>)
+        </a>
+        
+        <a href="/logout" class="btn-pill" style="background-color: #dc3545; color: white; border: 2px solid #b02a37;">
+            🚪 Logout
+        </a>
+    <% } else { %>
+        <!-- ... Keep your Guest Login/Sign Up links here ... -->
+        <a href="/login" style="color: #ff6b6b; text-decoration: none; font-weight: bold;">Login</a>
+        <a href="/signup" style="color: #28a745; text-decoration: none; font-weight: bold;">Sign Up</a>
+    <% } %>
+</div>
+
 
 </header>
