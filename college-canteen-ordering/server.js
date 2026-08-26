@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const nodemailer = require('nodemailer'); // ADDED
 const { createClient } = require('@supabase/supabase-js');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
@@ -60,19 +61,36 @@ if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
     console.warn('❌ Razorpay keys are missing from environment. Orders will fail until RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are set on the server.');
 }
 
+// ==================== EMAIL SETUP ====================
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+        user: process.env.EMAIL_USER || 'suryasreemanth01@gmail.com',
+        pass: process.env.EMAIL_PASS || 'klbi vkdj huty fuwn'
+    }
+});
+
+transporter.verify((error, success) => {
+    if (error) {
+        console.log('❌ Email Error:', error);
+    } else {
+        console.log('✅ Email ready!');
+    }
+});
+
 // ==================== ORDER WINDOW SETTINGS ====================
 const settingsPath = path.join(__dirname, 'settings.json');
 
-// Function to get current settings
 function getSettings() {
     try {
         return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     } catch (e) {
-        return { isOpen: true, openTime: "08:00", closeTime: "17:00" }; // Defaults
+        return { isOpen: true, openTime: "08:00", closeTime: "17:00" };
     }
 }
 
-// Function to check if ordering is currently allowed
 function isOrderWindowOpen() {
     const settings = getSettings();
     if (!settings.isOpen) return false;
@@ -80,7 +98,6 @@ function isOrderWindowOpen() {
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    // Check if current time is between openTime and closeTime
     if (currentTime >= settings.openTime && currentTime < settings.closeTime) {
         return true;
     }
@@ -120,14 +137,15 @@ app.get('/', async (req, res) => {
         `);
     }
 });
+
 // ==================== FAST GMAIL LOGIN (Google-style) ====================
 app.get('/google-login', (req, res) => {
-    res.render('quick-login'); // Renders a simple page asking for just their email
+    res.render('quick-login'); 
 });
+
 app.post('/quick-login-submit', async (req, res) => {
     const { email } = req.body;
 
-    // Create a quick session (No password needed)
     req.session.user = { 
         id: 'google-user', 
         email: email, 
@@ -141,7 +159,6 @@ app.post('/quick-login-submit', async (req, res) => {
 app.get('/menu/:category', async (req, res) => {
     const category = req.params.category;
 
-    // 🚨 BLOCK ORDERS IF CLOSED
     if (!isOrderWindowOpen()) {
         const settings = getSettings();
         return res.send(`
@@ -152,7 +169,6 @@ app.get('/menu/:category', async (req, res) => {
             </div>
         `);
     }
-    // 🚨 END TIME CHECK
 
     let items = [];
 
@@ -201,11 +217,9 @@ app.post('/add-to-cart', (req, res) => {
 app.get('/cart', (req, res) => {
     const error = req.query.error || null;
 
-    // 🚨 BLOCK CART IF CLOSED
     if (!isOrderWindowOpen()) {
         return res.redirect('/'); 
     }
-    // 🚨 END TIME CHECK
 
     res.render('cart', { cart: req.session.cart || [], error: error });
 });
@@ -228,7 +242,6 @@ app.post('/update-cart', (req, res) => {
 
 // 5. CAMERA & UPLOAD
 app.get('/camera', (req, res) => {
-    // 🚨 BLOCK PAYMENT PROCESS IF CLOSED
     if (!isOrderWindowOpen()) {
         return res.redirect('/');
     }
@@ -243,7 +256,11 @@ app.post('/upload-id', upload.single('idPhoto'), (req, res) => {
     req.session.rollNumber = req.body.rollNumber;
     
     // Automatically get the email from the logged-in user!
-    req.session.studentEmail = req.session.user.email; 
+    if (req.session.user) {
+        req.session.studentEmail = req.session.user.email; 
+    } else {
+        req.session.studentEmail = 'N/A';
+    }
 
     res.redirect('/payment');
 });
@@ -295,7 +312,7 @@ app.post('/create-razorpay-order', async (req, res) => {
 });
 
 // 2. Verify Payment and Process Order
-const SHEETDB_URL = process.env.SHEETDB_URL; // Make sure you added this to Render Env Vars!
+const SHEETDB_URL = process.env.SHEETDB_URL; 
 
 app.post('/verify-payment', async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -318,13 +335,11 @@ app.post('/verify-payment', async (req, res) => {
             const total = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
             const itemsString = cart.map(item => `${item.name} x${item.quantity}`).join(', ');
 
-            // ========================
             // SAVE TO GOOGLE SHEET
-            // ========================
             try {
                 const newRow = {
                     data: [{
-                        Date: new Date().toLocaleString(),
+                        Date: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
                         "Roll Number": req.session.rollNumber || 'N/A',
                         "Email": req.session.studentEmail || 'N/A',
                         Classroom: req.session.classroom || 'N/A',
@@ -343,26 +358,23 @@ app.post('/verify-payment', async (req, res) => {
                 console.log('✅ Order saved to Excel.');
             } catch (e) { console.log("SheetDB error:", e.message); }
 
-            // ========================
             // SAVE TO SUPABASE DASHBOARD
-            // ========================
             const istTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
             const orderData = {
                 rollNumber: req.session.rollNumber || 'N/A',
                 studentEmail: req.session.studentEmail || 'N/A',
                 items: itemsString,
                 total: total,
-                created_at: istTime, // This fixes the time
+                created_at: istTime,
                 status: 'pending'
             };
             const { data, error } = await supabase.from('orders').insert([orderData]);
 
-            // Store the inserted order's ID so we can look it up later!
             if (error) {
                 console.log("Error saving to Supabase:", error.message);
             } else {
                 console.log("Order saved with ID:", data[0].id);
-                req.session.lastOrderId = data[0].id; // Saves the ID in session
+                req.session.lastOrderId = data[0].id; 
             }
 
             return res.json({ success: true, message: 'Payment verified' });
@@ -509,21 +521,20 @@ app.get('/test-excel', async (req, res) => {
         res.send(`<h1 style="color: red;">❌ Error</h1><p>${error.message}</p>`);
     }
 });
+
 // ==================== ADMIN: MARK ORDER AS READY ====================
 app.post('/admin/mark-ready', async (req, res) => {
     if (!req.session.isAdmin) return res.redirect('/admin-login');
     
     const { orderId, studentEmail, studentRoll } = req.body;
 
-    // 1. Update the database (Supabase) to "Ready"
     const { error: updateError } = await supabase.from('orders').update({ status: 'ready' }).eq('id', orderId);
     if (updateError) console.log("Update error:", updateError.message);
 
-    // 2. Send the "Ready for Pickup" Email to the Student!
-    if (studentEmail && studentEmail !== 'N/A') {
+    if (studentEmail && studentEmail !== 'N/A' && studentEmail !== '') {
         const mailOptions = {
-            from: process.env.EMAIL_USER, // Your Gmail
-            to: studentEmail, // Student's email
+            from: process.env.EMAIL_USER,
+            to: studentEmail,
             subject: '📢 Your Canteen Order is Ready for Pickup!',
             html: `
                 <h2>🎉 Your Order is Ready!</h2>
@@ -534,7 +545,6 @@ app.post('/admin/mark-ready', async (req, res) => {
             `
         };
         
-        // Send email in the background
         transporter.sendMail(mailOptions)
             .then(info => console.log("✅ Ready Email sent to:", studentEmail))
             .catch(err => console.log("❌ Ready Email failed:", err.message));
@@ -544,6 +554,7 @@ app.post('/admin/mark-ready', async (req, res) => {
 
     res.redirect('/admin/dashboard');
 });
+
 // ==================== START SERVER ====================
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -563,4 +574,3 @@ app.get('/canteen', (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     res.render('canteen', { user: req.session.user, cart: req.session.cart || [] });
 });
-
