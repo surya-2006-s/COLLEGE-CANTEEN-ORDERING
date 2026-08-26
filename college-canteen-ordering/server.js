@@ -238,15 +238,12 @@ app.post('/upload-id', upload.single('idPhoto'), (req, res) => {
     if (req.file) req.session.idPhoto = req.file.filename;
     req.session.rollNumber = req.body.rollNumber;
     
-    // Automatically get the email from the logged-in user!
-    if (req.session.user) {
-        req.session.studentEmail = req.session.user.email; 
-    } else {
-        req.session.studentEmail = 'N/A';
-    }
+    // Take the email that the student typed in the form
+    req.session.studentEmail = req.body.studentEmail || 'N/A'; 
 
     res.redirect('/payment');
 });
+
 
 // 6. PAYMENT PAGES
 app.get('/payment', (req, res) => {
