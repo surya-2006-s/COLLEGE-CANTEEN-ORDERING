@@ -1,26 +1,127 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Login with Google - KLH Canteen</title>
-  <style>
-    body { background: #f0f2f5; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-    .login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 350px; }
-    h1 { color: #333; font-size: 24px; margin-bottom: 10px; }
-    input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; font-size: 16px; box-sizing: border-box; }
-    button { width: 100%; background: #4285F4; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
-    button:hover { background: #357AE8; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose an account - KLH Canteen</title>
+    <style>
+        body {
+            background: #f0f2f5;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            width: 400px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h2 {
+            margin: 0 0 5px 0;
+            color: #202124;
+        }
+        p {
+            color: #5f6368;
+            font-size: 14px;
+            margin: 0 0 30px 0;
+        }
+        .account-option {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border: 1px solid #dadce0;
+            border-radius: 30px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .account-option:hover {
+            background: #f8f9fa;
+            border-color: #202124;
+        }
+        .user-avatar {
+            background: #4285F4;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .account-info {
+            flex-grow: 1;
+        }
+        .account-name {
+            font-weight: bold;
+            color: #202124;
+            font-size: 14px;
+        }
+        .account-email {
+            color: #5f6368;
+            font-size: 12px;
+        }
+        .use-another {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            border: 1px solid #dadce0;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #3c4043;
+            font-weight: 500;
+            font-size: 14px;
+            justify-content: center;
+        }
+        .use-another:hover {
+            background: #f8f9fa;
+        }
+    </style>
 </head>
 <body>
-  <div class="login-box">
-    <h1>🏫 Continue with Google</h1>
-    <p style="color: #666; font-size: 14px;">Enter your school email to continue</p>
-    
-    <form action="/quick-login-submit" method="POST">
-      <input type="email" placeholder="student@klh.edu.in" name="email" required>
-      <button type="submit">Continue</button>
-    </form>
-    <p style="margin-top: 15px;"><a href="/login" style="color: #667eea;">Back to normal Login</a></p>
-  </div>
+    <div class="container">
+        <div class="logo">
+            <span style="font-size: 40px;">🏫</span>
+        </div>
+        <h2>Choose an account</h2>
+        <p>to continue to <strong>KLH Canteen</strong></p>
+
+        <!-- This is the saved account from the device -->
+        <form action="/quick-login-submit" method="POST">
+            <input type="hidden" name="email" value="suryasreemanth01@gmail.com">
+            <button type="submit" style="background: none; border: none; width: 100%; padding: 0; cursor: pointer;">
+                <div class="account-option">
+                    <div class="user-avatar">S</div>
+                    <div class="account-info">
+                        <div class="account-name">Surya Sreemanth</div>
+                        <div class="account-email">suryasreemanth01@gmail.com</div>
+                    </div>
+                </div>
+            </button>
+        </form>
+
+        <!-- This looks like "Use another account" but lets them type a new email -->
+        <form action="/quick-login-submit" method="POST" style="margin-top: 10px;">
+            <input type="email" name="email" placeholder="Enter another email" required style="width: 100%; padding: 12px; border-radius: 30px; border: 1px solid #dadce0; font-size: 14px; text-align: center; margin-bottom: 10px; box-sizing: border-box;">
+            <button type="submit" class="use-another">Use another account</button>
+        </form>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="/login" style="color: #5f6368; font-size: 12px;">Back to Login</a>
+        </div>
+    </div>
 </body>
 </html>

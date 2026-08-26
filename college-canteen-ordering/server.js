@@ -143,17 +143,15 @@ app.get('/google-login', (req, res) => {
     res.render('quick-login'); 
 });
 
-app.post('/quick-login-submit', async (req, res) => {
+app.post('/quick-login-submit', (req, res) => {
     const { email } = req.body;
-
     req.session.user = { 
         id: 'google-user', 
         email: email, 
         full_name: email.split('@')[0] 
     };
-
     res.redirect('/');
-});
+});;
 
 // 2. MENU PAGE (WITH TIME CHECK)
 app.get('/menu/:category', async (req, res) => {
