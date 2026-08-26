@@ -245,6 +245,7 @@ app.post('/upload-id', upload.single('idPhoto'), (req, res) => {
 });
 
 
+
 // 6. PAYMENT PAGES
 app.get('/payment', (req, res) => {
     if (!req.session.idPhoto) return res.redirect('/camera');
