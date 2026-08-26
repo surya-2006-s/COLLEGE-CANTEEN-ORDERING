@@ -18,7 +18,7 @@
       align-items: center;
     }
 
-    /* Login container with semi-transparent overlay */
+    /* Login container */
     .login-container {
       background: rgba(255, 255, 255, 0.92);
       max-width: 400px;
@@ -70,6 +70,38 @@
       background: #2a5c8e;
     }
 
+    /* Google Button Styles */
+    .or-divider {
+      text-align: center;
+      color: #888;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    .google-btn {
+      display: block;
+      background: white;
+      border: 2px solid #ddd;
+      padding: 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+      text-align: center;
+      transition: 0.3s;
+    }
+
+    .google-btn:hover {
+      background: #f8f8f8;
+      border-color: #bbb;
+    }
+
+    .google-btn img {
+      width: 20px;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+
     .footer-links {
       text-align: center;
       margin-top: 20px;
@@ -92,26 +124,26 @@
     <h1>🏫 KLH University</h1>
     <h2>Welcome to Canteen</h2>
 
-    <!-- Fixed form to send 'email' and 'password' to server -->
+    <!-- Normal Email/Password Login -->
     <form action="/login" method="POST">
       <input type="email" placeholder="Email Address" name="email" required>
       <input type="password" placeholder="Password" name="password" required>
       <button type="submit">Login</button>
     </form>
 
+    <!-- Divider -->
+    <div class="or-divider">or</div>
+
+    <!-- Google Login Button -->
+    <a href="/auth/google" class="google-btn">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
+    Continue with Google
+</a>
+
     <div class="footer-links">
       <p>Don't have an account? <a href="/signup">Sign Up</a></p>
       <p><a href="/">← Back to Home</a></p>
     </div>
   </div>
-  <!-- Add this right below your <button type="submit">Login</button> -->
-<div style="text-align: center; margin-top: 20px;">
-    <p style="color: #666; font-size: 14px;">or</p>
-    <a href="/google-login" style="display: block; background: white; border: 2px solid #ddd; padding: 12px; border-radius: 8px; text-decoration: none; color: #333; font-weight: bold;">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 20px; vertical-align: middle; margin-right: 10px;">
-        Continue with Google
-    </a>
-</div>
-
 </body>
 </html>
