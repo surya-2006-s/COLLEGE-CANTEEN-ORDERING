@@ -120,6 +120,22 @@ app.get('/', async (req, res) => {
         `);
     }
 });
+// ==================== FAST GMAIL LOGIN (Google-style) ====================
+app.get('/google-login', (req, res) => {
+    res.render('quick-login'); // Renders a simple page asking for just their email
+});
+app.post('/quick-login-submit', async (req, res) => {
+    const { email } = req.body;
+
+    // Create a quick session (No password needed)
+    req.session.user = { 
+        id: 'google-user', 
+        email: email, 
+        full_name: email.split('@')[0] 
+    };
+
+    res.redirect('/');
+});
 
 // 2. MENU PAGE (WITH TIME CHECK)
 app.get('/menu/:category', async (req, res) => {
@@ -225,7 +241,10 @@ app.get('/camera', (req, res) => {
 app.post('/upload-id', upload.single('idPhoto'), (req, res) => {
     if (req.file) req.session.idPhoto = req.file.filename;
     req.session.rollNumber = req.body.rollNumber;
-    req.session.studentEmail = req.body.studentEmail; // This MUST be here!
+    
+    // Automatically get the email from the logged-in user!
+    req.session.studentEmail = req.session.user.email; 
+
     res.redirect('/payment');
 });
 

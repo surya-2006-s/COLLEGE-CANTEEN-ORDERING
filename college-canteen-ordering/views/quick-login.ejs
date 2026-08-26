@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login with Google - KLH Canteen</title>
+  <style>
+    body { background: #f0f2f5; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 350px; }
+    h1 { color: #333; font-size: 24px; margin-bottom: 10px; }
+    input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; font-size: 16px; box-sizing: border-box; }
+    button { width: 100%; background: #4285F4; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    button:hover { background: #357AE8; }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h1>🏫 Continue with Google</h1>
+    <p style="color: #666; font-size: 14px;">Enter your school email to continue</p>
+    
+    <form action="/quick-login-submit" method="POST">
+      <input type="email" placeholder="student@klh.edu.in" name="email" required>
+      <button type="submit">Continue</button>
+    </form>
+    <p style="margin-top: 15px;"><a href="/login" style="color: #667eea;">Back to normal Login</a></p>
+  </div>
+</body>
+</html>
