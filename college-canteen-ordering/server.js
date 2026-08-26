@@ -5,13 +5,34 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const nodemailer = require('nodemailer'); // ADDED
+const nodemailer = require('nodemailer');
 const { createClient } = require('@supabase/supabase-js');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ==================== GOOGLE OAUTH SETUP ====================
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "/auth/google/callback"
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    const user = {
+        id: profile.id,
+        email: profile.emails[0].value,
+        full_name: profile.displayName
+    };
+    return cb(null, user);
+  }
+));
+
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
 
 // ==================== MIDDLEWARE ====================
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -27,6 +48,9 @@ app.use(session({
         maxAge: 24 * 60 * 60 * 1000
     }
 }));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -138,20 +162,18 @@ app.get('/', async (req, res) => {
     }
 });
 
-// ==================== FAST GMAIL LOGIN (Google-style) ====================
-app.get('/google-login', (req, res) => {
-    res.render('quick-login'); 
-});
+// ==================== GOOGLE OAUTH ROUTES ====================
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
 
-app.post('/quick-login-submit', (req, res) => {
-    const { email } = req.body;
-    req.session.user = { 
-        id: 'google-user', 
-        email: email, 
-        full_name: email.split('@')[0] 
-    };
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    req.session.user = req.user; // Save the Google user to your session!
     res.redirect('/');
-});;
+  }
+);
 
 // 2. MENU PAGE (WITH TIME CHECK)
 app.get('/menu/:category', async (req, res) => {
