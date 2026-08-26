@@ -70,7 +70,7 @@
       background: #2a5c8e;
     }
 
-    /* Google Button Styles */
+    /* Divider */
     .or-divider {
       text-align: center;
       color: #888;
@@ -78,30 +78,7 @@
       font-size: 14px;
     }
 
-    .google-btn {
-      display: block;
-      background: white;
-      border: 2px solid #ddd;
-      padding: 12px;
-      border-radius: 8px;
-      text-decoration: none;
-      color: #333;
-      font-weight: bold;
-      text-align: center;
-      transition: 0.3s;
-    }
-
-    .google-btn:hover {
-      background: #f8f8f8;
-      border-color: #bbb;
-    }
-
-    .google-btn img {
-      width: 20px;
-      vertical-align: middle;
-      margin-right: 10px;
-    }
-
+    /* Footer Links */
     .footer-links {
       text-align: center;
       margin-top: 20px;
@@ -134,16 +111,71 @@
     <!-- Divider -->
     <div class="or-divider">or</div>
 
-    <!-- Google Login Button -->
-    <a href="/auth/google" class="google-btn">
-    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
-    Continue with Google
-</a>
+    <!-- OTP Login Button -->
+    <div style="text-align: center; margin-top: 20px;">
+        <button type="button" id="otpBtn" onclick="startOtp()" style="background: #4285F4; width: 100%;">📧 Login with Gmail OTP</button>
+    </div>
 
+    <!-- OTP Section (Hidden initially) -->
+    <div id="otpSection" style="display: none; margin-top: 15px;">
+        <input type="text" id="otpInput" placeholder="Enter 6-digit code" maxlength="6" style="text-align: center; letter-spacing: 5px; font-size: 20px;">
+        <button type="button" onclick="verifyOtp()" style="background: #28a745; width: 100%;">Verify & Login</button>
+        <p style="font-size: 12px; color: #666; text-align: center; margin-top: 5px;">Code sent to your email. Valid for 5 mins.</p>
+    </div>
+
+    <!-- Footer -->
     <div class="footer-links">
       <p>Don't have an account? <a href="/signup">Sign Up</a></p>
       <p><a href="/">← Back to Home</a></p>
     </div>
   </div>
+
+  <!-- ============ OTP JAVASCRIPT ============ -->
+  <script>
+    let userEmail = "";
+
+    async function startOtp() {
+      userEmail = prompt("Enter your Gmail address:");
+      if (!userEmail) return;
+
+      const btn = document.getElementById('otpBtn');
+      btn.innerText = "Sending Code...";
+      btn.disabled = true;
+
+      const response = await fetch('/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("✅ Code sent! Check your email.");
+        document.getElementById('otpSection').style.display = 'block';
+      } else {
+        alert("❌ Error: " + data.message);
+      }
+      btn.innerText = "📧 Login with Gmail OTP";
+      btn.disabled = false;
+    }
+
+    async function verifyOtp() {
+      const otp = document.getElementById('otpInput').value;
+      const response = await fetch('/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail, otp: otp })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        window.location.href = '/';
+      } else {
+        alert("❌ " + data.message);
+      }
+    }
+  </script>
 </body>
 </html>
