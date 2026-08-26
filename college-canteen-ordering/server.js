@@ -9,7 +9,6 @@ const nodemailer = require('nodemailer');
 const { createClient } = require('@supabase/supabase-js');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
-const otpGenerator = require('otp-generator'); // ADD THIS
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -137,54 +136,6 @@ app.get('/', async (req, res) => {
             <p><a href="/test">Test Route</a></p>
         `);
     }
-});
-
-// ==================== GMAIL OTP LOGIN ====================
-const otpStore = {};
-
-// 1. Send OTP to user's email
-app.post('/send-otp', async (req, res) => {
-    const { email } = req.body;
-
-    if (!email) return res.status(400).json({ success: false, message: 'Email is required!' });
-
-    const otp = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false });
-    otpStore[email] = { code: otp, expires: Date.now() + 300000 };
-
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: '🔐 Your KLH Canteen Login Code',
-        html: `<h2>Your One-Time Password (OTP)</h2>
-               <p>Use this code to log in to KLH Canteen:</p>
-               <h1 style="font-size: 40px; letter-spacing: 5px; color: #1a3c6e;">${otp}</h1>
-               <p>This code is valid for 5 minutes.</p>`
-    };
-
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log("✅ OTP sent to:", email);
-        res.json({ success: true, message: 'OTP sent to your email!' });
-    } catch (error) {
-        console.error("❌ Failed to send OTP:", error.message);
-        res.status(500).json({ success: false, message: 'Failed to send OTP. Check Gmail App Password.' });
-    }
-});
-
-// 2. Verify OTP and log in
-app.post('/verify-otp', (req, res) => {
-    const { email, otp } = req.body;
-
-    const stored = otpStore[email];
-
-    if (!stored || stored.code !== otp || Date.now() > stored.expires) {
-        return res.status(400).json({ success: false, message: 'Invalid or expired OTP!' });
-    }
-
-    delete otpStore[email];
-    req.session.user = { id: 'email-user', email: email, full_name: email.split('@')[0] };
-    
-    res.json({ success: true, message: 'Login successful!' });
 });
 
 // 2. MENU PAGE (WITH TIME CHECK)
