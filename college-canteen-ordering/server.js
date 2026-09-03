@@ -43,9 +43,10 @@ const upload = multer({ storage: storage });
 
 // ==================== SUPABASE SETUP ====================
 const supabase = createClient(
-    process.env.SUPABASE_URL, 
-    process.env.SUPABASE_KEY
+    process.env.SUPABASE_URL.trim(), 
+    process.env.SUPABASE_KEY.trim()
 );
+
 
 console.log('🔗 Supabase connected');
 
