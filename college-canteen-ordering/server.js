@@ -377,17 +377,20 @@ app.get('/signup', (req, res) => {
 app.post('/signup', async (req, res) => {
     const { full_name, email, password } = req.body;
     try {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: { data: { full_name: full_name } }
-        });
+        // Insert directly into your users table (No Supabase Auth blocking!)
+        const { error } = await supabase
+            .from('users')
+            .insert([{ full_name, email, password }]);
+
         if (error) return res.render('signup', { error: error.message });
+        
+        // Redirect to login immediately
         res.redirect('/login');
     } catch (error) {
-        res.render('signup', { error: 'Error creating account.' });
+        res.render('signup', { error: error.message });
     }
 });
+
 
 // ==================== LOGIN ====================
 app.get('/login', (req, res) => { 
