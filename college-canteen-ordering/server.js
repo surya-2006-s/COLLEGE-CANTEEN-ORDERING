@@ -378,18 +378,24 @@ app.post('/signup', async (req, res) => {
     const { full_name, email, password } = req.body;
     try {
         // Insert directly into your users table (No Supabase Auth blocking!)
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('users')
-            .insert([{ full_name, email, password }]);
+            .insert([{ full_name, email, password }])
+            .select();
 
-        if (error) return res.render('signup', { error: error.message });
+        if (error) {
+            console.log("❌ Signup error:", error.message);
+            return res.render('signup', { error: error.message });
+        }
         
-        // Redirect to login immediately
+        console.log("✅ User created:", email);
         res.redirect('/login');
     } catch (error) {
+        console.log("❌ Signup error:", error.message);
         res.render('signup', { error: error.message });
     }
 });
+
 
 
 
@@ -400,18 +406,44 @@ app.get('/login', (req, res) => {
 
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
+
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return res.render("login", { error: "Invalid email or password." });
-        if (!data.user) return res.render("login", { error: "User not found." });
-        
-        const full_name = data.user.user_metadata?.full_name || email;
-        req.session.user = { id: data.user.id, email: data.user.email, full_name: full_name };
+        console.log("🔍 Trying to login with:", email);
+
+        // Check if the user exists in your local 'users' table!
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', email)
+            .single();
+
+        if (error || !data) {
+            console.log("❌ User not found in database:", error?.message);
+            return res.render("login", { error: "Invalid email or password." });
+        }
+
+        // Check if password matches
+        if (data.password !== password) {
+            console.log("❌ Password mismatch");
+            return res.render("login", { error: "Invalid email or password." });
+        }
+
+        // Success! Set the session
+        console.log("✅ User logged in:", data.email);
+        req.session.user = { 
+            id: data.id, 
+            email: data.email, 
+            full_name: data.full_name 
+        };
+
         return res.redirect("/");
+
     } catch (err) {
+        console.log("❌ Server Error:", err.message);
         return res.render("login", { error: "Invalid email or password." });
     }
 });
+
 
 app.get('/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/login'));
