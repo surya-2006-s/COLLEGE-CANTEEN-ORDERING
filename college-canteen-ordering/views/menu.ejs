@@ -3,111 +3,388 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= category %> - College Canteen</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <title><%= category %> - KLH Canteen</title>
+    
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+
     <style>
-        .menu-header {
-            text-align: center;
-            margin-bottom: 30px;
+        /* ==================== BASE STYLES ==================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .menu-header h2 {
-            font-size: 28px;
-            color: #333;
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FAFC; /* Clean, professional light gray background */
+            color: #111827;
+            min-height: 100vh;
         }
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            padding: 10px;
-        }
-        .menu-item {
+
+        /* ==================== MODERN HEADER ==================== */
+        header {
             background: white;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: transform 0.3s;
+            padding: 15px 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: #4F46E5;
+            text-decoration: none;
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: #64748B;
+            margin-top: -2px;
+        }
+
+        .header-actions {
             display: flex;
             align-items: center;
             gap: 15px;
         }
-        .menu-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+
+        .btn-nav {
+            color: #4F46E5;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: color 0.2s;
         }
-        .menu-item img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
+
+        .btn-nav:hover {
+            color: #4338CA;
+        }
+
+        .btn-cart {
+            background: #4F46E5;
+            color: white;
+            padding: 10px 18px;
             border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
         }
-        .item-info h3 {
-            margin: 0;
+
+        .btn-cart:hover {
+            background: #4338CA;
+        }
+
+        /* ==================== CATEGORY HERO ==================== */
+        .category-hero {
+            max-width: 1200px;
+            margin: 30px auto 20px;
+            padding: 0 20px;
+        }
+
+        .breadcrumb {
+            font-size: 14px;
+            color: #64748B;
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb a {
+            color: #4F46E5;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .category-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #111827;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-subtitle {
+            color: #64748B;
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+
+        /* ==================== SEARCH & FILTER ==================== */
+        .search-container {
+            max-width: 1200px;
+            margin: 0 auto 30px;
+            padding: 0 20px;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 500px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 16px 14px 45px;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            color: #111827;
+            outline: none;
+            background: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: #4F46E5;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748B;
             font-size: 18px;
-            color: #333;
+            pointer-events: none;
         }
-        .item-info p {
-            margin: 5px 0;
-            color: #ff6b6b;
-            font-weight: bold;
+
+        /* ==================== PRODUCT GRID ==================== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        /* ==================== PRODUCT CARD ==================== */
+        .item-card {
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-color: #4F46E5;
+        }
+
+        /* Product Image Area (Placeholder) */
+        .item-image {
+            background: #F8FAFC;
+            height: 180px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 60px;
+            color: #C7D2FE;
+        }
+
+        .item-details {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .item-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 5px;
+        }
+
+        .item-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: #4F46E5;
+            margin-bottom: 15px;
+        }
+
+        /* Modern Add to Cart Button */
         .add-btn {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            background: #4F46E5;
             color: white;
             border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
+            padding: 13px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
             cursor: pointer;
-            font-weight: bold;
-            transition: transform 0.3s;
-            margin-top: 5px;
+            transition: background 0.2s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
+
         .add-btn:hover {
-            transform: scale(1.05);
+            background: #4338CA;
         }
+
+        /* Back Button */
         .back-link {
-            display: inline-block;
-            margin-top: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #4F46E5;
+            font-size: 16px;
+            font-weight: 600;
             text-decoration: none;
-            color: #ff6b6b;
-            font-weight: bold;
+            margin-bottom: 40px;
+            transition: color 0.2s;
         }
+
         .back-link:hover {
+            color: #4338CA;
             text-decoration: underline;
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 992px) {
+            .items-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .items-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .category-title {
+                font-size: 28px;
+            }
+            
+            .btn-nav {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .items-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <%- include('header') %>
 
-    <div class="container">
-        <div class="menu-header">
-            <h2>🍽️ <%= category %></h2>
+    <!-- ==================== MODERN HEADER ==================== -->
+    <header>
+        <div class="logo-group">
+            <a href="/" class="logo-title">KLH CANTEEN</a>
+            <span class="logo-subtitle">College Food Ordering</span>
         </div>
+        
+        <div class="header-actions">
+            <a href="/" class="btn-nav">Home</a>
+            <a href="/" class="btn-nav">Categories</a>
+            <a href="/cart" class="btn-cart">🛒 Cart (<%= typeof cart !== 'undefined' && cart ? cart.length : 0 %>)</a>
+            <% if (typeof user !== 'undefined' && user) { %>
+                <a href="/logout" class="btn-nav">Logout</a>
+            <% } else { %>
+                <a href="/login" class="btn-nav">Login</a>
+            <% } %>
+        </div>
+    </header>
 
-        <div class="menu-grid">
+    <!-- ==================== CATEGORY HERO ==================== -->
+    <div class="category-hero">
+        <div class="breadcrumb">
+            <a href="/">Home</a> → Categories → <%= category %>
+        </div>
+        
+        <h1 class="category-title">
+            <span>🍽️</span> <%= category %>
+        </h1>
+        <p class="category-subtitle">Explore our delicious <%= category %> collection</p>
+    </div>
+
+    <!-- ==================== SEARCH ==================== -->
+    <div class="search-container">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search <%= category %>..." id="searchInput" onkeyup="filterItems()">
+        </div>
+    </div>
+
+    <!-- ==================== PRODUCTS GRID ==================== -->
+    <div class="container">
+        <div class="items-grid" id="itemsGrid">
             <% items.forEach(item => { %>
-                <div class="menu-item">
-                    <% if (item.image_url) { %>
-                        <img src="<%= item.image_url %>" alt="<%= item.name %>">
-                    <% } %>
-                    
-                    <div class="item-info">
-                        <h3><%= item.name %></h3>
-                        <p>₹<%= item.price %></p>
+                <div class="item-card">
+                    <div class="item-image">🍦</div>
+                    <div class="item-details">
+                        <div>
+                            <div class="item-name"><%= item.name %></div>
+                            <div class="item-price">₹<%= item.price %></div>
+                        </div>
                         
                         <form action="/add-to-cart" method="POST">
                             <input type="hidden" name="itemId" value="<%= item.id %>">
                             <input type="hidden" name="itemName" value="<%= item.name %>">
                             <input type="hidden" name="price" value="<%= item.price %>">
                             <input type="hidden" name="category" value="<%= category %>">
-                            <button type="submit" class="add-btn">Add to Cart</button>
+                            <button type="submit" class="add-btn">+ Add to Cart</button>
                         </form>
                     </div>
                 </div>
             <% }) %>
         </div>
 
-        <a href="/" class="back-link">← Back to Menu</a>
+        <a href="/" class="back-link">← Back to Categories</a>
     </div>
+
+    <!-- Simple Frontend Search (No backend required) -->
+    <script>
+        function filterItems() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.item-card');
+            
+            cards.forEach(card => {
+                const name = card.querySelector('.item-name').textContent.toLowerCase();
+                card.style.display = name.includes(input) ? 'flex' : 'none';
+            });
+        }
+    </script>
+
 </body>
 </html>
