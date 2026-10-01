@@ -155,10 +155,11 @@
             font-weight: bold;
             display: inline-block;
         }
-        .status-pending { background: #fff3cd; color: #856404; }
-        .status-preparing { background: #cce5ff; color: #004085; }
-        .status-ready { background: #d4edda; color: #155724; }
-        .status-delivered { background: #d1ecf1; color: #0c5460; }
+        /* Status Badges for new statuses */
+        .status-ORDER_RECEIVED { background: #fff3cd; color: #856404; }
+        .status-ORDER_PREPARED { background: #cce5ff; color: #004085; }
+        .status-READY_TO_PICKUP { background: #d4edda; color: #155724; }
+        .status-ORDER_DELIVERED { background: #d1ecf1; color: #0c5460; }
 
         .no-orders {
             text-align: center;
@@ -176,28 +177,23 @@
             margin-left: 10px;
         }
 
-        /* Mark Ready Button Styles */
-        .btn-ready {
-            background: #28a745;
-            color: white;
+        /* Action Buttons */
+        .btn-status {
+            padding: 8px 12px;
             border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+            transition: 0.2s;
+            width: 100%;
+            margin-top: 5px;
         }
-        .btn-ready:hover {
-            transform: scale(1.05);
-            background: #218838;
-        }
-        .btn-ready:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
+        .btn-prepare { background: #3B82F6; } /* Blue */
+        .btn-ready { background: #F59E0B; }   /* Orange */
+        .btn-delivered { background: #10B981; } /* Green */
+        .btn-status:hover { transform: scale(1.05); }
 
         @media (max-width: 768px) {
             .stats {
@@ -208,6 +204,8 @@
                 gap: 15px;
                 text-align: center;
             }
+            table { font-size: 12px; }
+            td, th { padding: 8px; }
         }
     </style>
 </head>
@@ -222,7 +220,7 @@
             </div>
         </div>
 
-        <!-- ==================== NEW: ORDER WINDOW SETTINGS ==================== -->
+        <!-- Order Window Settings -->
         <div class="order-window">
             <h2>⏰ <span>Order Window Control</span></h2>
             <form action="/admin/update-window" method="POST">
@@ -231,22 +229,18 @@
                         <input type="checkbox" name="isOpen" value="true" checked> 
                         Enable Orders
                     </label>
-                    
                     <label>
                         Opens at:
                         <input type="time" name="openTime" value="01:01">
                     </label>
-                    
                     <label>
                         Closes at:
                         <input type="time" name="closeTime" value="23:59">
                     </label>
-                    
                     <button type="submit" class="save-btn">💾 Save Window</button>
                 </div>
             </form>
         </div>
-        <!-- ==================== END ORDER WINDOW ==================== -->
 
         <!-- Stats -->
         <div class="stats">
@@ -256,7 +250,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-number"><%= pendingOrders || 0 %></div>
-                <div class="stat-label">⏳ Pending Orders</div>
+                <div class="stat-label">⏳ Active Orders</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">₹<%= todayRevenue || 0 %></div>
@@ -301,18 +295,23 @@
                         <td><strong>₹<%= order.total %></strong></td>
                         <td>
                             <span class="status status-<%= order.status %>">
-                                <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                                <%= order.status.replace(/_/g, ' ') %>
                             </span>
                         </td>
                         <td>
-                            <% if (order.status === 'ready') { %>
-                                <button class="btn-ready" disabled>✅ Ready</button>
+                            <% if (order.status === 'ORDER_DELIVERED') { %>
+                                <button class="btn-status" style="background: #6c757d;" disabled>✅ Delivered</button>
                             <% } else { %>
-                                <form action="/admin/mark-ready" method="POST" style="display: inline;">
+                                <form action="/admin/update-order" method="POST">
                                     <input type="hidden" name="orderId" value="<%= order.id %>">
-                                    <input type="hidden" name="studentEmail" value="<%= order.studentEmail || '' %>">
-                                    <input type="hidden" name="studentRoll" value="<%= order.rollNumber || '' %>">
-                                    <button type="submit" class="btn-ready">🟢 Mark Ready</button>
+                                    
+                                    <% if (order.status === 'ORDER_RECEIVED') { %>
+                                        <button type="submit" name="status" value="ORDER_PREPARED" class="btn-status btn-prepare">Mark Prepared</button>
+                                    <% } else if (order.status === 'ORDER_PREPARED') { %>
+                                        <button type="submit" name="status" value="READY_TO_PICKUP" class="btn-status btn-ready">Mark Ready</button>
+                                    <% } else if (order.status === 'READY_TO_PICKUP') { %>
+                                        <button type="submit" name="status" value="ORDER_DELIVERED" class="btn-status btn-delivered">Mark Delivered</button>
+                                    <% } %>
                                 </form>
                             <% } %>
                         </td>

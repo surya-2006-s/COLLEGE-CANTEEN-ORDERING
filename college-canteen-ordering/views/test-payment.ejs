@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Payment - KLH Canteen</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #333; text-align: center; margin-bottom: 10px; }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 13px;
+        }
+        .section { margin-bottom: 20px; }
+        .section h3 { color: #667eea; margin-bottom: 10px; font-size: 16px; }
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 15px; }
+        .row span:first-child { color: #666; }
+        .row span:last-child { font-weight: bold; }
+        .total-row {
+            display: flex; justify-content: space-between;
+            padding: 15px 0; margin-top: 10px;
+            border-top: 2px solid #667eea;
+            font-size: 22px; font-weight: bold; color: #667eea;
+        }
+        .pay-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        .pay-btn:hover { transform: scale(1.02); }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🧪 Test Payment</h1>
+        <div class="warning">⚠️ This is a TEST MODE. No real money will be charged.</div>
+
+        <div class="section">
+            <h3>👤 Customer Details</h3>
+            <div class="row"><span>Name:</span><span><%= customerName %></span></div>
+            <div class="row"><span>Roll Number:</span><span><%= rollNumber %></span></div>
+            <div class="row"><span>Email:</span><span><%= studentEmail %></span></div>
+        </div>
+
+        <div class="section">
+            <h3>🛒 Order Summary</h3>
+            <% cart.forEach(item => { %>
+                <div class="row">
+                    <span><%= item.name %> × <%= item.quantity %></span>
+                    <span>₹<%= item.price * item.quantity %></span>
+                </div>
+            <% }) %>
+        </div>
+
+        <div class="total-row">
+            <span>Total:</span>
+            <span>₹<%= total %></span>
+        </div>
+
+        <form action="/confirm-test-payment" method="POST" onsubmit="return confirmPayment(this);">
+            <button type="submit" class="pay-btn" id="payBtn">🧪 TEST PAYMENT (₹<%= total %>)</button>
+        </form>
+
+        <a href="/camera" class="back-link">← Back</a>
+    </div>
+
+    <script>
+        // Prevent multiple clicks
+        function confirmPayment(form) {
+            const btn = document.getElementById('payBtn');
+            btn.disabled = true;
+            btn.innerText = '⏳ Processing...';
+            return true;
+        }
+    </script>
+</body>
+</html>
